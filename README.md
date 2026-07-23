@@ -127,9 +127,9 @@ SecureWatch-Home-SOC/
 │       ├── logging.md
 │       ├── commands.md
 │       └── troubleshooting.md
-├── images/                        # Diagram exports (PNG/SVG)
-├── drawio/                        # Editable draw.io source files
-└── assets/                        # Supporting assets
+├── images/                        
+├── drawio/                        
+└── assets/                        
 ```
 
 ## How to Use This Repository
