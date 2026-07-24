@@ -6,32 +6,6 @@
 
 SecureWatch Home SOC is a practice setup that copies what a real Security Operations Center uses. It runs on a secure Linux computer, allows safe remote access, collects all system logs in one place, and prepares those logs so they can be analyzed with a SIEM tool. The whole setup is built with free software: Oracle VirtualBox, Ubuntu Server, built‑in Linux logging tools, and Splunk. Everything runs inside a virtual lab on a Windows 11 computer.
 
-
-## Architecture at a Glance
-
-```mermaid
-flowchart TB
-    subgraph Host["Windows 11 Host Machine"]
-        VBox["Oracle VirtualBox\nHypervisor"]
-        SSHClient["SSH Client\n(Windows Terminal / PuTTY)"]
-    end
-
-    subgraph VM["Guest VM: soc-server (Ubuntu Server)"]
-        OS["Ubuntu Server 22.04 LTS"]
-        SSHD["OpenSSH Server"]
-        Users["Hardened User & Sudo Model"]
-        Logs["System Logging\n(auth.log, syslog, journald, auditd)"]
-        SplunkUser["splunk service account\n(log-read access via adm group)"]
-    end
-
-    SSHClient -- "NAT Port Forward\n(TCP 22)" --> SSHD
-    VBox -->|hosts| VM
-    SSHD --> Users
-    Users --> Logs
-    Logs --> SplunkUser
-    SplunkUser -.->|future phase| SIEM["Splunk SIEM\n(log ingestion)"]
-```
-
 ## Lab Environment
 
 I built this home SOC lab on my Windows 11 computer using Oracle VirtualBox. Inside VirtualBox, I created an Ubuntu Server LTS virtual machine named `soc-server`.
