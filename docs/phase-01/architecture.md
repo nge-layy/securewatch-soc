@@ -18,7 +18,7 @@ flowchart LR
     Hypervisor -->|virtual NIC\nNAT mode| VM
 ```
 
-A Type-2 hypervisor (VirtualBox) runs as an application on top of the host OS rather than directly on hardware. This is the appropriate model for a home lab: it requires no dedicated hardware, supports snapshotting for safe experimentation, and keeps the guest OS fully isolated from the host filesystem.
+VirtualBox is a Type 2 hypervisor that runs as an application on top of the host operating system instead of directly on the computer hardware. This model is suitable for a home lab because it does not need dedicated hardware, it allows snapshotting for safe testing, and it keeps the guest operating system completely separate from the host file system.
 
 ## Network Design
 
@@ -35,26 +35,23 @@ flowchart TB
 
 ### Why NAT and Not Bridged Networking
 
-| Mode | Guest Visibility on LAN | Use Case | Chosen? |
-|---|---|---|---|
-| NAT | Guest is hidden behind the host; not directly reachable from the LAN | Lab environments where the guest should reach *out* to the internet but not be reachable *from* other LAN devices | ✅ Yes |
-| Bridged | Guest gets its own IP on the physical LAN, fully visible to other devices | Scenarios requiring the VM to act like a first-class device on the network | ❌ No |
-| Host-Only | Guest can only talk to the host, no internet access | Fully isolated testing with no external connectivity | ❌ No (needed internet for updates) |
+NAT is used because it hides the guest system behind the host. Other devices on the local network cannot reach the guest directly, but the guest can still connect to the internet. This makes it ideal for a home lab where you want to test safely and still download updates.
+Bridged networking gives the guest its own IP address on the local network, making it visible to other computers. That setup is useful only when the virtual machine needs to act like a normal device on the network, which is not needed here.
+Host‑only networking allows the guest to talk only to the host and blocks internet access. It is good for complete isolation, but not suitable in this case because the guest needs internet access for updates.
 
-NAT was the correct choice for this phase because the goal was outbound connectivity (for updates and tool installation) without exposing `soc-server` to every other device on the home network by default. Inbound access (needed in Phase 2 for SSH) is handled deliberately through **port forwarding**, which only opens the specific port required rather than exposing the whole guest.
+NAT was the right choice at this stage because the goal was to give the guest system outbound access for updates and installing tools, without making soc-server visible to every device on the home network. When inbound access is needed later (for example, SSH in Phase 2), it is set up using port forwarding. This way only the required port is opened, instead of exposing the entire guest system.
 
 ## System Baseline
 
-Recording a system baseline early gives a reference point to detect unauthorized change later — the same principle a SOC uses when defining "normal" before it can detect "abnormal."
+When you record a system baseline early, you capture the starting state of your server. This gives you a clear reference point so later you can notice if something changes without permission. It is the same idea a SOC uses: first define what “normal” looks like, then you can detect what is “abnormal.”
 
-| Attribute | Baseline Value (example) |
-|---|---|
-| Hostname | `soc-server` |
-| OS | Ubuntu Server 22.04 LTS |
-| Kernel | `5.15.0-generic` (version at install time) |
-| Primary disk | Single virtual disk, ext4 filesystem |
-| Network mode | NAT |
-| Default shell | `/bin/bash` |
+For this server, the baseline includes the following details:
+-The hostname is soc-server.
+-The operating system is Ubuntu Server 22.04 LTS.
+-The kernel version at install time is 5.15.0-generic.
+-The primary disk is a single virtual disk using the ext4 filesystem.
+-The network mode is NAT.
+-The default shell is /bin/bash.
 
 ## Folder Structure Established in Phase 1
 
