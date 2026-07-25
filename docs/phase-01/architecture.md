@@ -46,12 +46,12 @@ NAT was the right choice at this stage because the goal was to give the guest sy
 When you record a system baseline early, you capture the starting state of your server. This gives you a clear reference point so later you can notice if something changes without permission. It is the same idea a SOC uses: first define what “normal” looks like, then you can detect what is “abnormal.”
 
 For this server, the baseline includes the following details:
--The hostname is soc-server.
--The operating system is Ubuntu Server 22.04 LTS.
--The kernel version at install time is 5.15.0-generic.
--The primary disk is a single virtual disk using the ext4 filesystem.
--The network mode is NAT.
--The default shell is /bin/bash.
+- The hostname is soc-server.
+- The operating system is Ubuntu Server 22.04 LTS.
+- The kernel version at install time is 5.15.0-generic.
+- The primary disk is a single virtual disk using the ext4 filesystem.
+- The network mode is NAT.
+- The default shell is /bin/bash.
 
 ## Folder Structure Established in Phase 1
 
