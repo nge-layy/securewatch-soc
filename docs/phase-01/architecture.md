@@ -1,4 +1,4 @@
-# Phase 1 — Architecture & Network Design
+# Phase 1 - Architecture & Network Design
 
 ## Virtualization Architecture
 
