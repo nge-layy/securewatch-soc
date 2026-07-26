@@ -1,4 +1,4 @@
-# Phase 1 — Problems & Solutions
+# Phase 1 - Problems & Solutions
 
 During this phase, I ran into a few problems while setting up the lab. Here is how I solved them.
 
