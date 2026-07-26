@@ -1,4 +1,4 @@
-# Phase 1 — Infrastructure Foundation
+# Phase 1 - Infrastructure Foundation
 
 ## Overview
 
