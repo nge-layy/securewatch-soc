@@ -2,34 +2,47 @@
 
 ## Overview
 
-Real servers are rarely administered from a physical console — they live in racks, cloud regions, or in this case, inside a hypervisor with no monitor attached. Phase 2 establishes secure remote administration of `soc-server` from the Windows 11 host over SSH, which is the same mechanism used to manage virtually every Linux server in production environments.
+In this phase, I set up secure remote access to my Ubuntu Server using SSH. This allows me to manage the server directly from my Windows computer without using the VirtualBox console.
 
-This phase treats SSH not just as a convenience feature but as a security control in its own right: how it's configured determines whether remote administration is an asset or the single biggest attack surface on the box.
+SSH is one of the most common tools used by Linux system administrators and SOC analysts to manage remote servers securely.
+
+---
 
 ## Objectives
 
-- Install and enable the OpenSSH server on `soc-server`
-- Ensure the SSH service starts automatically on boot
-- Configure VirtualBox NAT port forwarding so the Windows host can reach the guest's SSH port
-- Connect to `soc-server` remotely from Windows and verify the session
-- Understand and document the security implications of exposing a remote management service
+During this phase, I completed the following tasks:
 
-## Technologies Used
+- Installed the OpenSSH Server.
+- Enabled the SSH service.
+- Configured SSH to start automatically after reboot.
+- Set up VirtualBox NAT port forwarding.
+- Connected to `soc-server` from my Windows computer using SSH.
+- Verified that remote administration was working correctly.
 
-| Tool | Purpose |
-|---|---|
-| OpenSSH Server (`openssh-server`) | Provides encrypted remote shell access to the VM |
-| `systemd` | Manages the SSH service and its boot-time behavior |
-| VirtualBox NAT Port Forwarding | Maps a port on the Windows host to port 22 on the guest |
-| Windows SSH Client (OpenSSH / PuTTY) | Initiates the remote connection from the host |
+---
 
-## How SSH Works (Conceptually)
+## Tools Used
 
-SSH (Secure Shell) establishes an encrypted channel between a client and a server. Unlike legacy protocols such as Telnet, which transmit credentials and session data in plaintext, SSH encrypts the entire session — including the login itself — using asymmetric key exchange to establish a shared session key, then symmetric encryption for the ongoing traffic. This is the foundational reason SSH is the standard for remote Linux administration: an attacker capturing SSH traffic on the wire sees encrypted noise, not credentials or commands.
+The following tools were used during this phase:
 
-## Why Remote Administration Matters for a SOC
+- **OpenSSH Server** – Provides secure remote access to the Ubuntu Server.
+- **systemd** – Used to manage and control the SSH service.
+- **VirtualBox NAT Port Forwarding** – Allows the Windows host to connect to the virtual machine.
+- **Windows SSH Client** – Used to connect to the Ubuntu Server from Windows.
 
-A SOC analyst routinely needs to log into servers, jump boxes, and log-collection hosts that have no local console access. Demonstrating the ability to configure, harden, and troubleshoot SSH access — rather than just "clicking connect" — reflects the actual day-to-day reality of managing infrastructure remotely and securely.
+---
+
+## What is SSH?
+
+SSH (Secure Shell) is a protocol that allows you to securely connect to another computer over a network. It encrypts the connection so that usernames, passwords, and commands are protected while they travel between the client and the server.
+
+For Linux servers, SSH is the standard way to perform remote administration.
+
+---
+
+## Why This Matters
+
+Most Linux servers are managed remotely instead of through a physical monitor and keyboard. Learning how to install, configure, and troubleshoot SSH is an important skill for system administrators and SOC analysts because it is used every day in real production environments.
 
 ## Connection Flow
 
@@ -62,23 +75,27 @@ See [commands.md](commands.md) for the full command reference and [troubleshooti
 
 ## Security Considerations
 
-- **SSH is the single most exposed service in this lab.** Anything reachable from outside the box is a potential entry point, so its configuration deserves more scrutiny than almost any other service on the server.
-- **Port forwarding scope:** Only port 22 (SSH) was forwarded — no other ports were opened. Minimizing forwarded ports keeps the exposed surface as small as possible.
-- **Password authentication vs. key-based authentication:** Password auth was used initially to establish connectivity, with key-based authentication and further restrictions planned as part of the hardening work in Phase 2.5. Leaving password authentication enabled long-term on an internet-facing host is a known risk (susceptible to brute-force attacks); on this NAT-isolated lab the immediate exposure is limited, but the principle — key-based auth is stronger — still applies and is documented for anyone extending this lab to a publicly reachable environment.
+During this phase, I followed a few basic security practices:
 
-## Lessons Learned
+- Only **SSH** was exposed for remote administration.
+- I forwarded only the SSH port in VirtualBox instead of opening unnecessary ports.
+- I started with **password authentication** to make sure the connection worked. In the next phase, I will improve security by setting up **SSH key authentication** and additional hardening.
 
-- Enabling a service (`systemctl enable`) is a distinct step from starting it (`systemctl start`) — conflating the two is a common misconfiguration that leaves a service unavailable after a reboot.
-- NAT port forwarding is a deliberate, auditable choice: only the port that's actually needed should ever be forwarded, and each forwarded port should have a documented reason.
-- Testing a new SSH configuration from a **second terminal session** while keeping the original session open prevents getting locked out if a config change breaks authentication — a habit carried forward into every later hardening step.
+## What I Learned
+
+During this phase, I learned that:
+
+- A service must be **started** before it can be used, and **enabled** if it should start automatically after a reboot.
+- Port forwarding should be kept to a minimum to reduce unnecessary exposure.
+- Keeping one SSH session open while testing another is a simple way to avoid accidentally locking yourself out of the server.
 
 ## Verification Checklist
 
-- [x] `openssh-server` installed
-- [x] `sshd` service active and enabled at boot
-- [x] NAT port-forwarding rule configured in VirtualBox
-- [x] Successful remote SSH login from Windows host
-- [x] Session confirmed encrypted (no plaintext fallback)
+-  `openssh-server` installed
+-  `sshd` service active and enabled at boot
+- NAT port-forwarding rule configured in VirtualBox
+- Successful remote SSH login from Windows host
+- Session confirmed encrypted (no plaintext fallback)
 
 ## References
 
@@ -87,4 +104,4 @@ See [commands.md](commands.md) for the full command reference and [troubleshooti
 
 ## Next Phase
 
-➡️ [Phase 2.5 — Linux Server Hardening](../phase-02.5/README.md): now that the server can be reached remotely, the focus shifts to controlling exactly who can do what once they're in — users, groups, sudo, and permissions.
+ [Phase 2.5 — Linux Server Hardening](../phase-02.5/README.md): now that the server can be reached remotely, the focus shifts to controlling exactly who can do what once they're in — users, groups, sudo, and permissions.
