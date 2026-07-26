@@ -1,61 +1,79 @@
-# Phase 1 — Problems Encountered & Solutions
+# Phase 1 — Problems & Solutions
 
-Documenting problems (not just successes) is one of the most valuable habits in SOC and sysadmin work. A record of what broke and how it was fixed is effectively a personal knowledge base — the same function a runbook serves on a real team.
+During this phase, I ran into a few problems while setting up the lab. Here is how I solved them.
 
 ---
 
-### Problem 1: VM had no internet access immediately after install
+## Problem 1: No Internet Connection
 
-**Symptom:** `ping 8.8.8.8` failed with 100% packet loss right after the Ubuntu Server installation completed.
+**Problem**
 
-**Root Cause:** The network adapter was still initializing / had not yet pulled a DHCP lease from VirtualBox's internal NAT engine.
+The Ubuntu Server VM could not access the internet after installation.
 
-**Solution:**
+**Solution**
+
+- Checked the network configuration using `ip a`.
+- Renewed the DHCP lease.
+- Restarted the network service when needed.
+
 ```bash
 sudo dhclient enp0s3
-```
-Manually requesting a DHCP lease on the interface resolved the issue immediately. In cases where this doesn't help, restarting the network service is the next step:
-```bash
 sudo systemctl restart systemd-networkd
 ```
 
-**Lesson:** Always verify `ip a` shows a valid address *before* assuming a deeper network or firewall problem — many "no internet" issues are just a delayed or failed DHCP handshake.
+**What I Learned**
+
+Always check the network connection first before troubleshooting other issues.
 
 ---
 
-### Problem 2: `apt update` failed with a repository fetch error
+## Problem 2: Unable to Update Packages
 
-**Symptom:**
-```
-Err:1 http://archive.ubuntu.com/ubuntu jammy InRelease
-  Temporary failure resolving 'archive.ubuntu.com'
-```
+**Problem**
 
-**Root Cause:** DNS resolution was not working inside the guest, even though the raw network connection was fine (confirmed via `ping 8.8.8.8` succeeding while `ping google.com` failed).
+`apt update` failed because the server could not resolve domain names.
 
-**Solution:** Verified `/etc/resolv.conf` was pointing to a valid resolver. Since VirtualBox NAT typically hands out its internal DNS forwarder automatically, restarting the network stack resolved it in this case:
+**Solution**
+
+Restarted the DNS resolver service.
+
 ```bash
 sudo systemctl restart systemd-resolved
 ```
 
-**Lesson:** Splitting connectivity testing into "raw IP" (`ping 8.8.8.8`) and "DNS-dependent" (`ping google.com`) checks pinpoints exactly which layer is broken instead of guessing.
+Then verified both internet connectivity and DNS were working.
+
+```bash
+ping -c 4 8.8.8.8
+ping -c 4 google.com
+```
+
+**What I Learned**
+
+Testing both an IP address and a domain name helps identify whether the problem is the network or DNS.
 
 ---
 
-### Problem 3: Uncertainty about which VirtualBox network mode to use
+## Problem 3: Choosing the Network Mode
 
-**Symptom:** Not a technical failure, but a design decision point — NAT, Bridged, and Host-Only all "work," but they behave very differently.
+**Problem**
 
-**Resolution:** NAT was selected after weighing the trade-offs documented in [architecture.md](architecture.md). The deciding factor was that the lab needed outbound internet access without exposing the guest to the rest of the home network by default.
+I wasn't sure whether to use NAT, Bridged, or Host-Only networking.
 
-**Lesson:** Networking mode is a security decision, not just a connectivity one. Choosing Bridged mode without a specific reason would have unnecessarily expanded the attack surface of the lab from day one.
+**Solution**
+
+After comparing the options, I chose **NAT** because it provides internet access while keeping the virtual machine isolated from my home network.
+
+**What I Learned**
+
+The network mode is an important security decision. NAT is a good choice for a home lab because it reduces unnecessary exposure.
 
 ---
 
-## Summary Table
+## Summary
 
-| Problem | Root Cause | Fix | Prevention |
-|---|---|---|---|
-| No internet after install | DHCP lease not yet acquired | `dhclient` on interface | Always check `ip a` first |
-| `apt update` DNS failure | Broken/slow DNS resolution | Restart `systemd-resolved` | Test raw IP vs DNS separately |
-| Network mode uncertainty | Design ambiguity | Chose NAT for isolation + outbound access | Document network decisions upfront |
+| Problem | Solution |
+|---------|----------|
+| No internet connection | Renewed the DHCP lease and restarted the network service. |
+| `apt update` failed | Restarted the DNS resolver and verified connectivity. |
+| Choosing a network mode | Selected NAT for internet access and isolation. |
