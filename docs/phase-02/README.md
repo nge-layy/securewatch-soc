@@ -1,4 +1,4 @@
-# Phase 2 — Remote Administration
+# Phase 2 - Remote Administration
 
 ## Overview
 
