@@ -1,4 +1,4 @@
-# Phase 1 — Command Reference
+# Phase 1 - Command Reference
 
 These are the main commands I used during Phase 1 to verify the server and prepare it for the next stages of the project.
 
