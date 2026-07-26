@@ -1,125 +1,124 @@
-# Phase 2 — Command Reference
+# Phase 2 - Command Reference
 
 ---
 
-### 1. Install the OpenSSH server
+These are the main commands I used to configure and verify SSH remote access.
+
+---
+
+## 1. Install OpenSSH Server
 
 ```bash
 sudo apt update
 sudo apt install openssh-server -y
 ```
 
-**Why:** Ubuntu Server does not install an SSH daemon by default on every image, so this ensures it's present. Running `apt update` first guarantees the installed version pulls from a current package index rather than a stale one.
+**Purpose**
+
+Install the OpenSSH Server package and make sure the package list is up to date.
 
 ---
 
-### 2. Check the SSH service status
+## 2. Check the SSH Service
 
 ```bash
 sudo systemctl status ssh
 ```
 
-**Why:** Confirms the daemon is actually running before attempting a remote connection — troubleshooting a "connection refused" error is much faster when you've already verified the service state locally.
+**Purpose**
 
-**Expected output (excerpt):**
-```
-● ssh.service - OpenBSD Secure Shell server
-     Loaded: loaded (/lib/systemd/system/ssh.service; enabled; vendor preset: enabled)
-     Active: active (running) since ...
-```
-
-The `enabled` flag in the `Loaded` line confirms it will also start automatically on boot.
+Verify that the SSH service is running correctly.
 
 ---
 
-### 3. Enable SSH to start on boot (if not already enabled)
+## 3. Enable SSH at Startup
 
 ```bash
 sudo systemctl enable ssh
 ```
 
-**Why:** Without this, `sshd` would need to be started manually after every reboot — unacceptable for a server meant to be managed remotely, since a reboot would otherwise require console access just to bring SSH back online.
+**Purpose**
+
+Configure SSH to start automatically whenever the server boots.
 
 ---
 
-### 4. Start (or restart) the SSH service
+## 4. Start or Restart SSH
 
 ```bash
 sudo systemctl start ssh
-sudo systemctl restart ssh   # used after config changes
+sudo systemctl restart ssh
 ```
 
-**Why:** `start` is used the first time the service is brought up; `restart` is used any time `/etc/ssh/sshd_config` is modified, since `sshd` does not hot-reload configuration changes automatically.
+**Purpose**
+
+Start the SSH service or restart it after making configuration changes.
 
 ---
 
-### 5. Confirm sshd is listening on the expected port
+## 5. Verify SSH is Listening
 
 ```bash
 sudo ss -tulpn | grep ssh
 ```
 
-**Why:** Verifies at the network-socket level that `sshd` is actually bound and listening on port 22, independent of what `systemctl status` reports. This catches edge cases where the service reports "active" but failed to bind to the port (e.g., a port conflict).
+**Purpose**
 
-**Expected output:**
-```
-tcp   LISTEN  0  128  0.0.0.0:22   0.0.0.0:*   users:(("sshd",pid=...,fd=3))
-```
+Confirm that SSH is listening on port **22** and ready to accept connections.
 
 ---
 
-### 6. Identify the guest's NAT IP (for reference/logging, not for direct host access)
+## 6. Check the Server IP Address
 
 ```bash
-ip a | grep inet
+ip a
 ```
 
-**Why:** Even though the host reaches the guest through the forwarded port rather than the guest's IP directly, recording the guest's internal address is useful for troubleshooting and for cross-referencing later against SSH and auth logs.
+**Purpose**
+
+View the server's IP address for verification and troubleshooting.
 
 ---
 
-### 7. Configure VirtualBox NAT port forwarding
+## 7. Configure VirtualBox Port Forwarding
 
-*(Performed in the VirtualBox Manager GUI, not the guest shell)*
+**VirtualBox → Settings → Network → Adapter 1 → Advanced → Port Forwarding**
 
-```
-VM Settings → Network → Adapter 1 → Advanced → Port Forwarding
-  Name:      SSH
-  Protocol:  TCP
-  Host IP:   127.0.0.1
-  Host Port: 2222
-  Guest IP:  (blank — VirtualBox routes internally)
-  Guest Port: 22
-```
+| Setting | Value |
+|---------|-------|
+| Name | SSH |
+| Protocol | TCP |
+| Host IP | 127.0.0.1 |
+| Host Port | 2222 |
+| Guest Port | 22 |
 
-**Why:** This is the rule that actually makes the guest reachable from the host. Binding **Host IP** to `127.0.0.1` (rather than leaving it blank, which defaults to all interfaces) ensures only the host machine itself — not other devices on the home network — can use this forwarded port.
+**Purpose**
+
+Forward port **2222** on the Windows host to port **22** on the Ubuntu Server so SSH can connect through NAT.
 
 ---
 
-### 8. Connect from the Windows host
+## 8. Connect from Windows
 
 ```powershell
 ssh -p 2222 username@127.0.0.1
 ```
 
-**Why:** Connects to the loopback address on the forwarded port, which VirtualBox's NAT engine transparently routes to port 22 inside the guest. The `-p` flag is required here because SSH defaults to port 22, but the host-side forwarded port is 2222 in this setup.
+**Purpose**
 
-**Expected output (first connection):**
-```
-The authenticity of host '[127.0.0.1]:2222 ([127.0.0.1]:2222)' can't be established.
-ED25519 key fingerprint is SHA256:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.
-Are you sure you want to continue connecting (yes/no/[fingerprint])?
-```
+Connect to the Ubuntu Server from the Windows computer using SSH.
 
-Typing `yes` adds the host key to `known_hosts`, so future connections won't repeat this prompt unless the server's host key changes — which would indicate either a reinstalled server or a potential man-in-the-middle condition worth investigating.
+The first connection will ask you to confirm the server's fingerprint. After accepting it, future connections will remember the server unless its fingerprint changes.
 
 ---
 
-### 9. Verify the remote session
+## 9. Verify the Connection
 
 ```bash
 whoami
 hostname
 ```
 
-**Why:** A simple sanity check once connected — confirms the session landed on the correct user and correct machine, which matters once multiple lab VMs or jump hosts are in play.
+**Purpose**
+
+Confirm that you are connected to the correct user account and server.
