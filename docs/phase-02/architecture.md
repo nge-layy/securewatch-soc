@@ -1,6 +1,6 @@
-# Phase 2 — Architecture & Connection Design
+# Phase 2 - Architecture & Connection Design
 
-## Network Path: Windows Host → soc-server
+## Network Path: Windows Host -> soc-server
 
 ```mermaid
 flowchart LR
@@ -21,11 +21,13 @@ flowchart LR
     Client --> LocalPort --> Rule --> SSHD --> Shell
 ```
 
-## Why Port Forwarding Instead of Bridged Networking
+## Why I Used Port Forwarding
 
-Phase 1 established NAT mode specifically because it hides the guest from the rest of the home LAN. That decision creates a natural question for Phase 2: if the guest is hidden, how does the host reach it for SSH?
+In Phase 1, I chose **NAT networking** to keep the Ubuntu Server isolated from my home network. However, NAT also means I can't connect directly to the virtual machine from Windows.
 
-The answer is **targeted port forwarding** — instead of exposing the entire guest to the network (which Bridged mode would do), only a single, specific port (SSH, 22) is mapped from the host to the guest, and only the host itself can reach it via `localhost`. This preserves the isolation benefits of NAT while still enabling remote administration. It's the same principle used in production environments with bastion hosts or jump boxes: expose the smallest possible surface required for the job.
+To solve this, I configured **port forwarding** in VirtualBox. This forwards only the SSH port from my Windows computer to the Ubuntu Server, allowing me to connect securely using SSH.
+
+This approach lets me manage the server remotely while keeping the rest of the virtual machine hidden from my home network.
 
 ## Port Forwarding Rule
 
@@ -33,7 +35,7 @@ The answer is **targeted port forwarding** — instead of exposing the entire gu
 |---|---|---|---|---|---|
 | SSH | TCP | 127.0.0.1 | 2222 | (guest NAT IP) | 22 |
 
-Binding the host side to `127.0.0.1` (rather than `0.0.0.0`) ensures the forwarded port is only reachable from the host machine itself — not from other devices on the home network — reinforcing the same isolation principle established in Phase 1.
+By setting the host IP to `127.0.0.1`, the forwarded SSH port can only be accessed from my Windows computer. Other devices on my home network cannot connect to it, which helps keep the virtual machine isolated and follows the security approach established in Phase 1.
 
 ## SSH Session Establishment (Detailed)
 
@@ -54,7 +56,11 @@ sequenceDiagram
     S->>C: Interactive shell session begins
 ```
 
-**Key security concept — host key verification:** The first time a client connects to a new SSH server, it's presented with the server's host key fingerprint and asked to confirm it. This is what prevents a class of attack where a malicious host silently impersonates the real server (a man-in-the-middle). Accepting a host key blindly defeats this protection — the fingerprint should be verified out-of-band whenever possible, especially outside a lab environment.
+## Host Key Verification
+
+The first time I connected to the Ubuntu Server using SSH, Windows asked me to confirm the server's identity by displaying its host key fingerprint.
+After accepting it, the fingerprint is saved on my computer. Future SSH connections compare the saved fingerprint with the server's current fingerprint. If they don't match, SSH displays a warning because the server's identity may have changed.
+This helps protect against connecting to the wrong server or a malicious system pretending to be the real one.
 
 ## Service Boot Behavior
 
