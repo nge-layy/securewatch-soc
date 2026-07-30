@@ -1,5 +1,3 @@
 ## VM Screenshots
 
-### Ubuntu Server VM
-
-!(screenshots/Vm- ubuntu-server.png)
+![Ubuntu Server](screenshots/Vm-ubuntu-server.png)
