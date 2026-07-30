@@ -112,8 +112,8 @@ Before moving to the next phase, I confirmed that:
 
 ## References 
 
--[Linux File Permissions - Red Hat Sysadmin Guide](https://www.redhat.com/sysadmin/linux-file-permissions-explained)
--[sudo and sudoers Manual] (https://www.sudo.ws/docs/man/sudoers.man/)
+- [Linux File Permissions - Red Hat Sysadmin Guide](https://www.redhat.com/sysadmin/linux-file-permissions-explained)
+- [sudo and sudoers Manual] (https://www.sudo.ws/docs/man/sudoers.man/)
 
 ## Next Phase
 
