@@ -43,16 +43,6 @@ Documentation: [Phase 2](docs/phase-02/README.md)
 
 ---
 
-### Phase 2.5 - Linux Server Hardening (Completed)
-- Learned Linux users and groups.
-- Configured sudo privileges.
-- Managed file permissions.
-- Applied basic password and account security.
-
-Documentation: [Phase 2.5](docs/phase-02.5/README.md)
-
----
-
 ### Phase 3 - Logging & SIEM Preparation (Completed)
 - Explored Linux log files.
 - Configured `auditd`.
