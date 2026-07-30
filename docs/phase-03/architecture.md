@@ -1,4 +1,4 @@
-# Phase 3 — Architecture
+# Phase 3 - Architecture
 
 ## Log Flow
 
