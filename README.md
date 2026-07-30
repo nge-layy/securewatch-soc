@@ -53,7 +53,11 @@ Documentation: [Phase 3](docs/phase-03/README.md)
 ---
 
 ### Phase 4 - Detection & Alerting (Completed)
-Next, I will connect the server to Splunk, create detection rules, and build dashboards.
+- connected the server to Splunk
+- created detection rules
+- built dashboards
+
+Documentation: [Phase 3](docs/phase-04/README.md)
 
 ---
 
