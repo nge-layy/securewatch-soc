@@ -25,7 +25,7 @@ These logs will later be forwarded to Splunk for monitoring and analysis.
 
 This project is divided into several phases. Each phase builds on the previous one as I gradually create a functional home Security Operations Center (SOC).
 
-### Phase 1 – Infrastructure Foundation (Completed)
+### Phase 1 - Infrastructure Foundation (Completed)
 - Created the Ubuntu Server virtual machine.
 - Configured the network.
 - Installed and verified the operating system.
@@ -34,7 +34,7 @@ Documentation: [Phase 1](docs/phase-01/README.md)
 
 ---
 
-### Phase 2 – Remote Administration (Completed)
+### Phase 2 - Remote Administration (Completed)
 - Installed and configured SSH.
 - Enabled secure remote access from my Windows computer.
 - Verified remote administration.
@@ -43,7 +43,7 @@ Documentation: [Phase 2](docs/phase-02/README.md)
 
 ---
 
-### Phase 2.5 – Linux Server Hardening (Completed)
+### Phase 2.5 - Linux Server Hardening (Completed)
 - Learned Linux users and groups.
 - Configured sudo privileges.
 - Managed file permissions.
@@ -53,7 +53,7 @@ Documentation: [Phase 2.5](docs/phase-02.5/README.md)
 
 ---
 
-### Phase 3 – Logging & SIEM Preparation (Completed)
+### Phase 3 - Logging & SIEM Preparation (Completed)
 - Explored Linux log files.
 - Configured `auditd`.
 - Prepared the server for future Splunk integration.
@@ -62,17 +62,17 @@ Documentation: [Phase 3](docs/phase-03/README.md)
 
 ---
 
-### Phase 4 – Detection & Alerting (Planned)
+### Phase 4 - Detection & Alerting (Planned)
 Next, I will connect the server to Splunk, create detection rules, and build dashboards.
 
 ---
 
-### Phase 5 – Attack Simulation (Planned)
+### Phase 5 - Attack Simulation (Planned)
 I will simulate realistic attacks against the lab to generate security events for analysis.
 
 ---
 
-### Phase 6 – Incident Response (Planned)
+### Phase 6 - Incident Response (Planned)
 Finally, I will investigate alerts, document findings, and create incident response reports.
 
 ## Repository Structure
