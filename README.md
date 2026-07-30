@@ -57,7 +57,7 @@ Documentation: [Phase 3](docs/phase-03/README.md)
 - created detection rules
 - built dashboards
 
-Documentation: [Phase 3](docs/phase-04/README.md)
+Documentation: [Phase 4](docs/phase-04/README.md)
 
 ---
 
