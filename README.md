@@ -52,7 +52,7 @@ Documentation: [Phase 3](docs/phase-03/README.md)
 
 ---
 
-### Phase 4 - Detection & Alerting (Planned)
+### Phase 4 - Detection & Alerting (Completed)
 Next, I will connect the server to Splunk, create detection rules, and build dashboards.
 
 ---
@@ -81,10 +81,6 @@ SecureWatch-Home-SOC/
 │   │   ├── architecture.md
 │   │   ├── commands.md
 │   │   └── troubleshooting.md
-│   ├── phase-02.5/                
-│   │   ├── README.md
-│   │   ├── commands.md
-│   │   └── hardening.md
 │   └── phase-03/                  
 │       ├── README.md
 │       ├── architecture.md
