@@ -1,55 +1,120 @@
-# Phase 2 — Problems Encountered & Solutions
+# Phase 2 - Problems Encountered & Solutions
+
+## Overview
+
+During this phase, I encountered several issues while configuring SSH remote access. Troubleshooting these problems helped me better understand how SSH authentication, VirtualBox networking, and Linux services work together.
 
 ---
 
-### Problem 1: `ssh: connect to host 127.0.0.1 port 2222: Connection refused`
+## Problem 1 — SSH Authentication Failed
 
-**Symptom:** SSH connection attempt from Windows failed immediately with "connection refused."
+### Symptom
 
-**Root Cause:** The VirtualBox port-forwarding rule had not yet been saved/applied — the VM was still using the default network configuration with no forwarding rule active.
+When connecting from Windows, SSH returned:
 
-**Solution:** Re-opened VM Settings → Network → Port Forwarding and confirmed the rule was saved (VirtualBox requires the VM to sometimes be powered off, or the network adapter disabled/re-enabled, for new NAT rules to take effect cleanly). After saving and restarting the VM's network adapter, the connection succeeded.
+```text
+sam@localhost's password:
+Permission denied, please try again.
+```
 
-**Lesson:** "Connection refused" at this stage almost always means the packet never reached a listening service at all — it's a network/forwarding-layer problem, not an SSH authentication problem. Distinguishing "refused" from "timed out" from "authentication failed" narrows troubleshooting significantly.
+### Root Cause
+
+The SSH server was running correctly, but the username or password entered during login was incorrect.
+
+### Solution
+
+I verified:
+
+- The correct Linux username.
+- The correct password.
+- That the account existed on the Ubuntu Server.
+
+After confirming the credentials, I connected successfully.
+
+### Lesson Learned
+
+Receiving **"Permission denied"** usually means the network connection is working correctly. The problem is authentication rather than networking or the SSH service itself.
 
 ---
 
-### Problem 2: SSH connection timed out (no "refused" response)
+## Problem 2 — Unable to Connect Through SSH
 
-**Symptom:** The Windows SSH client hung for a long period before failing with a timeout, rather than immediately refusing the connection.
+### Symptom
 
-**Root Cause:** The guest's firewall (`ufw`, if enabled) was blocking inbound connections on port 22.
+The Windows computer could not establish an SSH connection to the Ubuntu Server.
 
-**Solution:**
+### Root Cause
+
+The VirtualBox NAT port forwarding rule had not been configured correctly.
+
+### Solution
+
+I opened the VirtualBox network settings and created the following rule.
+
+| Setting | Value |
+|----------|-------|
+| Protocol | TCP |
+| Host IP | 127.0.0.1 |
+| Host Port | 2222 |
+| Guest Port | 22 |
+
+After applying the rule, I connected using:
+
+```powershell
+ssh -p 2222 sam@127.0.0.1
+```
+
+The connection was established successfully.
+
+### Lesson Learned
+
+Before troubleshooting SSH itself, always verify that the network path exists. If port forwarding is incorrect, the SSH server will never receive the connection request.
+
+---
+
+## Problem 3 — Verifying the SSH Service
+
+### Symptom
+
+Before attempting remote login, I needed to confirm that the SSH service was actually running.
+
+### Solution
+
+I checked the service status with:
+
 ```bash
-sudo ufw status
-sudo ufw allow 22/tcp
+sudo systemctl status ssh
 ```
-Explicitly allowing port 22 through the guest firewall resolved the timeout.
 
-**Lesson:** A timeout (as opposed to an immediate refusal) is a strong signal that a firewall is silently dropping packets rather than actively rejecting the connection — an important distinction when triaging network issues, since the two point to different layers of the stack.
+I also verified that the service would automatically start after every reboot.
+
+```bash
+sudo systemctl enable ssh
+```
+
+### Lesson Learned
+
+Always verify the service locally before troubleshooting from another computer. This helps separate service issues from network issues.
 
 ---
 
-### Problem 3: Host key changed warning on a later reconnect
+# Summary Table
 
-**Symptom:**
-```
-WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!
-```
-
-**Root Cause:** The VM had been rebuilt/reinstalled between sessions, which generated a new SSH host key — a normal and expected outcome after a fresh OS install, not a sign of compromise in this specific case.
-
-**Solution:** Removed the stale entry from the Windows client's `known_hosts` file and reconnected, accepting the new host key fingerprint after confirming (out of caution) that the rebuild was intentional.
-
-**Lesson:** This warning exists specifically to catch machine-in-the-middle scenarios. In a lab context where you know you just rebuilt the VM, it's safe to accept the new key — but the same warning on a production or unfamiliar system should never be dismissed without verifying the cause first.
+| Problem | Root Cause | Solution |
+|----------|------------|----------|
+| Permission denied | Incorrect login credentials | Verified username and password |
+| Unable to connect | NAT port forwarding not configured correctly | Created the VirtualBox port forwarding rule |
+| Needed to verify SSH | Service status unknown | Checked and enabled the SSH service |
 
 ---
 
-## Summary Table
+# What I Learned
 
-| Problem | Root Cause | Fix | Prevention |
-|---|---|---|---|
-| Connection refused | Port forwarding rule not active | Re-apply/save NAT rule, restart adapter | Verify rule before testing connection |
-| Connection timed out | `ufw` blocking port 22 | `ufw allow 22/tcp` | Check firewall rules early in troubleshooting |
-| Host key changed warning | VM rebuilt, new host key generated | Remove stale entry from `known_hosts`, verify, reconnect | Always confirm *why* the key changed before accepting |
+This phase taught me that troubleshooting SSH should follow a logical order.
+
+1. Verify that the SSH service is running.
+2. Confirm the network configuration and port forwarding.
+3. Test the connection.
+4. Check authentication if the connection reaches the server.
+
+Following these steps makes it much easier to identify where a problem occurs instead of guessing.
