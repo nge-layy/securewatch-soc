@@ -2,171 +2,140 @@
 
 ## Overview
 
-In this phase, I prepared my Ubuntu Server for log collection and SIEM integration.
+In this phase, I prepared my Ubuntu Server for Security Information and Event Management (SIEM).
 
-I explored the different types of system logs, installed and configured `auditd`, and prepared Splunk to read system logs. I also made sure the `splunk` service account had permission to read the required log files without giving it unnecessary administrative privileges.
+I explored how Linux generates and stores system logs, installed **auditd** for security auditing, and installed **Splunk Enterprise** to collect and analyze those logs.
 
-This phase builds the foundation for collecting and analyzing security events in the next stages of the project.
+I also configured the `splunk` service account with the minimum permissions required to read system logs, following the principle of least privilege.
+
+This phase provides the logging foundation for the threat detection and incident response activities that will be developed in later phases.
 
 ---
 
-## Objectives
+# Objectives
 
 During this phase, I completed the following tasks:
 
 - Explored the default Linux log files.
-- Learned how system logs are generated and stored.
+- Learned how Linux stores system events.
 - Installed and configured `auditd`.
 - Installed Splunk Enterprise.
-- Created the `splunk` service account.
-- Granted the `splunk` account access to read system logs.
+- Started the Splunk service.
+- Verified the Splunk Web interface.
+- Reviewed the permissions required for log collection.
 - Verified that Splunk could access the required log files.
 
----
-
-## Tools Used
-
-The following tools were used during this phase:
-
-- **auth.log** – Records login attempts, SSH activity, and `sudo` commands.
-- **syslog** – Stores general system events.
-- **journalctl** – View systemd logs.
-- **auditd** – Records security-related events.
-- **Splunk Enterprise** – Collects and analyzes log data.
-- **adm Group** – Allows the Splunk service account to read system logs.
-
-
-## How Linux Logging Works — The Big Picture
-
-```mermaid
-flowchart TB
-    Kernel["Linux Kernel"]
-    AuditSub["Audit Subsystem"]
-    Syslog["rsyslog"]
-    Systemd["systemd"]
-
-    Kernel -->|syscall/audit events| AuditSub
-    AuditSub -->|writes| AuditLog["/var/log/audit/audit.log"]
-
-    Apps["Applications & Services"] -->|log messages| Syslog
-    Syslog -->|writes| SyslogFile["/var/log/syslog"]
-    Syslog -->|writes| AuthLog["/var/log/auth.log"]
-
-    Systemd -->|journal entries| Journald["journald"]
-    Journald -->|binary structured log| JournalStore["/var/log/journal/"]
-
-    AuditLog --> SplunkUser["splunk service account\n(adm group — read only)"]
-    SyslogFile --> SplunkUser
-    AuthLog --> SplunkUser
-    JournalStore -.->|readable via journalctl| SplunkUser
-
-    SplunkUser -.->|future ingestion| SIEM["Splunk SIEM"]
-```
-
-See [architecture.md](architecture.md) for the full diagram and [logging.md](logging.md) for a detailed breakdown of each log source.
-
-## Logging Overview
-
-In this phase, I explored how Ubuntu stores system logs and prepared the server for Splunk.
-
-I installed `auditd`, reviewed important log files, and made sure the `splunk` service account could read the required logs without giving it unnecessary administrator privileges.
+See **commands.md** for the complete command reference and **troubleshooting.md** for the issues encountered during this phase.
 
 ---
 
-## Architecture
+# Tools Used
 
-```mermaid
-flowchart LR
-
-    Apps[Applications]
-    Auth[auth.log]
-    Syslog[syslog]
-    Audit[auditd]
-
-    Apps --> Auth
-    Apps --> Syslog
-    Apps --> Audit
-
-    Auth --> Splunk[splunk User]
-    Syslog --> Splunk
-    Audit --> Splunk
-
-    Splunk --> SIEM[Splunk Enterprise]
-```
-
-This is much easier to understand than the previous diagram.
+| Tool | Purpose |
+|------|---------|
+| `auth.log` | Records authentication events such as SSH logins and sudo usage |
+| `syslog` | Stores general operating system messages |
+| `journalctl` | Displays logs managed by systemd |
+| `auditd` | Records security-related events |
+| Splunk Enterprise | Collects, indexes, and searches log data |
+| Linux `adm` Group | Grants read access to system log files |
 
 ---
 
-## Log Files
+# Architecture
 
-| Log File | Purpose |
-|----------|---------|
-| `auth.log` | Login attempts, SSH activity, and `sudo` commands |
-| `syslog` | General system messages |
-| `journalctl` | View logs managed by systemd |
-| `auditd` | Security audit events |
+See **architecture.md** for the complete architecture and log flow diagrams.
 
 ---
 
-## What I Did
+# Linux Log Sources
+
+Ubuntu stores different types of information in different log files.
+
+| Log Source | Purpose |
+|------------|---------|
+| `auth.log` | SSH logins, authentication, sudo activity |
+| `syslog` | General operating system messages |
+| `journalctl` | Logs from systemd services |
+| `auditd` | Security auditing and monitored events |
+
+Understanding these log sources is important because a SIEM relies on them to detect suspicious activity.
+
+---
+
+# What I Did
 
 During this phase, I:
 
-- Reviewed Linux system logs.
-- Installed and started `auditd`.
+- Reviewed the default Linux log files.
+- Installed and enabled `auditd`.
 - Installed Splunk Enterprise.
-- Created the `splunk` service account.
-- Added the `splunk` user to the `adm` group.
-- Verified that the `splunk` account could read the required log files.
+- Started the Splunk service.
+- Accessed the Splunk Web interface.
+- Verified the Splunk service was running.
+- Granted the `splunk` account permission to read system log files.
+- Confirmed that the required logs were accessible.
 
 ---
 
-## Why I Used the `adm` Group
+# Why Splunk Needs Log Access
 
-The `splunk` account only needs to read log files.
+Splunk analyzes information stored in log files.
 
-Instead of giving it administrator access, I added it to the `adm` group so it could read the logs needed by Splunk while keeping the account's permissions limited.
+Instead of giving the Splunk service full administrator privileges, I granted it only the permissions required to read the logs.
 
----
-
-## Security Considerations
-
-During this phase, I followed these security practices:
-
-- Gave the `splunk` account only the permissions it needed.
-- Avoided giving the `splunk` account `sudo` access.
-- Verified that system logs could be read before moving to the next phase.
+This follows the **Principle of Least Privilege**, which reduces the impact of a compromised service account.
 
 ---
 
-## What I Learned
+# Security Considerations
+
+During this phase, I followed several security practices.
+
+- Installed Splunk using a dedicated service account.
+- Avoided giving unnecessary administrator privileges.
+- Granted only read access to required log files.
+- Verified that logging services were working before configuring Splunk.
+- Confirmed that important system logs were available for future monitoring.
+
+---
+
+# What I Learned
 
 This phase helped me understand that:
 
-- Linux stores different events in different log files.
-- `auditd` records security-related events.
-- Splunk only needs permission to read log files.
-- Giving services only the permissions they need helps improve security.
+- Different Linux logs record different types of events.
+- `auditd` provides more detailed security auditing than standard system logs.
+- Splunk depends on reliable log sources.
+- Service accounts should only receive the permissions they actually need.
+- Preparing good log sources is an important step before creating alerts and detections.
 
 ---
 
-## Verification
+# Verification Checklist
 
-Before moving to the next phase, I confirmed that:
+Before moving to the next phase, I confirmed:
 
-- `auditd` was installed and running.
-- System log files were available.
-- Splunk Enterprise was installed.
-- The `splunk` account was created.
-- The `splunk` account could read the required log files.
+-  `auditd` installed and running
+- System logs available
+- Splunk Enterprise installed
+- Splunk service running
+- Splunk Web interface accessible
+- Required log files readable
+- Log collection environment ready for SIEM configuration
 
-## References
+---
 
-- [auditd Documentation — Linux Audit Framework](https://github.com/linux-audit/audit-documentation)
-- [systemd journald man page](https://www.freedesktop.org/software/systemd/man/journald.conf.html)
-- [Splunk — Getting Data In (Universal Forwarder)](https://docs.splunk.com/Documentation/Splunk/latest/Data/Whatsyourdatasource)
+# References
 
-## Next Phase
+- Linux Audit Framework Documentation
+- Ubuntu Server Documentation
+- Splunk Enterprise Documentation
 
-Phase 4 — Detection & Alerting : with logs flowing and access correctly scoped, the next phase moves into actually ingesting these sources into Splunk and building detection content around them.
+---
+
+# Next Phase
+
+**Phase 4 – Threat Simulation & Log Collection**
+
+The next phase focuses on generating security events, collecting them in Splunk, and preparing the environment for detection and analysis.
