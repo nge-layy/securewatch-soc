@@ -2,9 +2,9 @@
 
 ## Overview
 
-In this phase, I set up secure remote access to my Ubuntu Server using SSH. This allows me to manage the server directly from my Windows computer without using the VirtualBox console.
+In this phase, I configured secure remote access to my Ubuntu Server using SSH. This allows me to manage the server from my Windows computer without opening the VirtualBox console.
 
-SSH is one of the most common tools used by Linux system administrators and SOC analysts to manage remote servers securely.
+SSH is one of the most common tools used by Linux administrators and SOC analysts to securely manage remote systems.
 
 ---
 
@@ -13,9 +13,8 @@ SSH is one of the most common tools used by Linux system administrators and SOC 
 During this phase, I completed the following tasks:
 
 - Installed the OpenSSH Server.
-- Enabled the SSH service.
-- Configured SSH to start automatically after reboot.
-- Set up VirtualBox NAT port forwarding.
+- Started and enabled the SSH service.
+- Configured VirtualBox NAT port forwarding.
 - Connected to `soc-server` from my Windows computer using SSH.
 - Verified that remote administration was working correctly.
 
@@ -26,7 +25,7 @@ During this phase, I completed the following tasks:
 The following tools were used during this phase:
 
 - **OpenSSH Server** – Provides secure remote access to the Ubuntu Server.
-- **systemd** – Used to manage and control the SSH service.
+- **systemd** – Used to start, stop, and manage the SSH service.
 - **VirtualBox NAT Port Forwarding** – Allows the Windows host to connect to the virtual machine.
 - **Windows SSH Client** – Used to connect to the Ubuntu Server from Windows.
 
@@ -34,74 +33,82 @@ The following tools were used during this phase:
 
 ## What is SSH?
 
-SSH (Secure Shell) is a protocol that allows you to securely connect to another computer over a network. It encrypts the connection so that usernames, passwords, and commands are protected while they travel between the client and the server.
+SSH (Secure Shell) is a secure protocol used to connect to another computer over a network. It encrypts the connection so that usernames, passwords, and commands are protected while they travel between the client and the server.
 
-For Linux servers, SSH is the standard way to perform remote administration.
+SSH is the standard method for managing Linux servers remotely.
 
 ---
 
 ## Why This Matters
 
-Most Linux servers are managed remotely instead of through a physical monitor and keyboard. Learning how to install, configure, and troubleshoot SSH is an important skill for system administrators and SOC analysts because it is used every day in real production environments.
+Most Linux servers are managed remotely instead of through a monitor and keyboard. Learning how to install, configure, and troubleshoot SSH is an important skill for Linux administrators and SOC analysts.
 
-## Connection Flow
+---
 
-```mermaid
-sequenceDiagram
-    participant W as Windows Host<br/>(SSH Client)
-    participant N as VirtualBox NAT<br/>(Port Forward: 2222 → 22)
-    participant S as soc-server<br/>(sshd on port 22)
+## Architecture
 
-    W->>N: TCP SYN to 127.0.0.1:2222
-    N->>S: Forwarded to 10.0.2.15:22
-    S->>N: SSH_VERSION banner + key exchange
-    N->>W: Relayed response
-    W->>S: Authentication (password/key)
-    S->>W: Encrypted shell session established
-```
+The SSH connection and VirtualBox port forwarding used in this phase are shown in [architecture.md](architecture.md).
 
-See [architecture.md](architecture.md) for the full network and port-forwarding diagram.
+---
 
-## Step-by-Step Summary
+## What I Did
 
-1. Installed the OpenSSH server package on `soc-server`.
-2. Verified the `sshd` service was active and enabled it to start automatically on boot.
-3. Configured a VirtualBox NAT port-forwarding rule mapping a host port to the guest's port 22.
-4. From the Windows host, connected to `soc-server` via SSH using the forwarded port.
-5. Verified the session was established, encrypted, and behaving as expected.
-6. Reviewed baseline `sshd_config` settings with security implications in mind (covered in depth in Phase 2.5's hardening work).
+During this phase, I:
 
-See [commands.md](commands.md) for the full command reference and [troubleshooting.md](troubleshooting.md) for issues encountered.
+1. Installed the OpenSSH Server.
+2. Started the SSH service and enabled it to start automatically after reboot.
+3. Configured a NAT port forwarding rule in VirtualBox.
+4. Connected to `soc-server` from my Windows computer using SSH.
+5. Confirmed that the remote session worked correctly.
+
+For the commands used in this phase, see [commands.md](commands.md).
+
+If you encounter similar issues, see [troubleshooting.md](troubleshooting.md).
+
+---
 
 ## Security Considerations
 
-During this phase, I followed a few basic security practices:
+During this phase, I followed these basic security practices:
 
-- Only **SSH** was exposed for remote administration.
-- I forwarded only the SSH port in VirtualBox instead of opening unnecessary ports.
-- I started with **password authentication** to make sure the connection worked. In the next phase, I will improve security by setting up **SSH key authentication** and additional hardening.
+- Only the SSH service was exposed for remote administration.
+- Only one port was forwarded in VirtualBox.
+- Password authentication was used during the initial setup. SSH key authentication will be added in a later phase.
+
+---
 
 ## What I Learned
 
-During this phase, I learned that:
+This phase helped me understand that:
 
-- A service must be **started** before it can be used, and **enabled** if it should start automatically after a reboot.
-- Port forwarding should be kept to a minimum to reduce unnecessary exposure.
-- Keeping one SSH session open while testing another is a simple way to avoid accidentally locking yourself out of the server.
+- A service must be started before it can be used.
+- Enabling a service allows it to start automatically after a reboot.
+- Port forwarding should be limited to only the services that are needed.
+- Keeping one SSH session open while testing changes can help prevent accidental lockouts.
 
-## Verification Checklist
+---
 
--  `openssh-server` installed
--  `sshd` service active and enabled at boot
-- NAT port-forwarding rule configured in VirtualBox
-- Successful remote SSH login from Windows host
-- Session confirmed encrypted (no plaintext fallback)
+## Verification
+
+Before moving to the next phase, I confirmed that:
+
+- OpenSSH Server was installed.
+- The SSH service was running.
+- The SSH service started automatically after reboot.
+- VirtualBox NAT port forwarding was configured correctly.
+- I successfully connected to `soc-server` from my Windows computer.
+
+---
 
 ## References
 
-- [OpenSSH Documentation](https://www.openssh.com/manual.html)
-- [VirtualBox Port Forwarding Manual](https://www.virtualbox.org/manual/ch06.html#natforward)
+- OpenSSH Documentation
+- Oracle VirtualBox User Manual
+
+---
 
 ## Next Phase
 
- [Phase 2.5 — Linux Server Hardening](../phase-02.5/README.md): now that the server can be reached remotely, the focus shifts to controlling exactly who can do what once they're in — users, groups, sudo, and permissions.
+**Phase 2.5 — Linux Server Hardening**
+
+In the next phase, I will improve the server's security by managing users, groups, permissions, and basic system hardening.
