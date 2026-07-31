@@ -1,6 +1,6 @@
-# Phase 1 - Command Reference
+# Phase 1 - Commands
 
-These are the main commands I used during Phase 1 to verify the server and prepare it for the next stages of the project.
+These are the main commands I used during Phase 1 to verify the Ubuntu Server installation and prepare it for the next stages of the SecureWatch Home SOC project.
 
 ---
 
@@ -12,7 +12,7 @@ ip a
 
 **Purpose**
 
-Check that the server has received an IP address and is connected to the network.
+Display the network interfaces and confirm that the server has received an IP address.
 
 ---
 
@@ -24,11 +24,11 @@ ping -c 4 8.8.8.8
 
 **Purpose**
 
-Verify that the server can reach the internet.
+Test internet connectivity using Google's public DNS server.
 
 ---
 
-## 3. Test DNS
+## 3. Test DNS Resolution
 
 ```bash
 ping -c 4 google.com
@@ -36,11 +36,11 @@ ping -c 4 google.com
 
 **Purpose**
 
-Confirm that DNS is working correctly.
+Verify that DNS is working by resolving a domain name.
 
 ---
 
-## 4. Update Package List
+## 4. Update the Package List
 
 ```bash
 sudo apt update
@@ -48,7 +48,7 @@ sudo apt update
 
 **Purpose**
 
-Download the latest package information from Ubuntu repositories.
+Refresh the package list from the Ubuntu repositories before installing updates.
 
 ---
 
@@ -60,7 +60,7 @@ sudo apt upgrade -y
 
 **Purpose**
 
-Update installed packages to the latest versions.
+Install the latest available package updates and security patches.
 
 ---
 
@@ -68,14 +68,35 @@ Update installed packages to the latest versions.
 
 ```bash
 hostnamectl
+```
+
+**Purpose**
+
+Display information about the operating system and hostname.
+
+```bash
 uname -r
+```
+
+**Purpose**
+
+Display the current Linux kernel version.
+
+```bash
 df -h
+```
+
+**Purpose**
+
+Check available disk space.
+
+```bash
 free -h
 ```
 
 **Purpose**
 
-View basic information about the server, including the hostname, kernel version, disk usage, and memory usage.
+View the amount of installed and available memory.
 
 ---
 
@@ -87,17 +108,29 @@ mkdir -p ~/projects/securewatch-home-soc/{notes,scripts,configs}
 
 **Purpose**
 
-Create folders to organize notes, scripts, and configuration files for future phases.
+Create folders to organize project notes, scripts, and configuration files.
 
 ---
 
-## Verify the Folder Structure
+## 8. Verify the Folder Structure
+
+If the **tree** package is installed:
 
 ```bash
 tree ~/projects/securewatch-home-soc
 ```
 
-**Expected Output**
+Or use:
+
+```bash
+ls -R ~/projects/securewatch-home-soc
+```
+
+**Purpose**
+
+Verify that the project folders were created successfully.
+
+**Example Output**
 
 ```text
 securewatch-home-soc
@@ -105,3 +138,17 @@ securewatch-home-soc
 ├── notes
 └── scripts
 ```
+
+---
+
+## Summary
+
+During this phase I learned how to:
+
+- Check network connectivity.
+- Verify internet and DNS access.
+- Update an Ubuntu Server.
+- View basic system information.
+- Organize project files using a simple folder structure.
+
+These basic Linux commands provide the foundation for the next phases of the SecureWatch Home SOC project.
