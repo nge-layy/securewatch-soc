@@ -90,10 +90,7 @@ SecureWatch-Home-SOC/
 │       ├── architecture.md
 │       ├── logging.md
 │       ├── commands.md
-│       └── troubleshooting.md
-├── images/                        
-├── drawio/                        
-└── assets/                        
+│       └── troubleshooting.md                      
 ```
 
 ## How to Use This Repository
