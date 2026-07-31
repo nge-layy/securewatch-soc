@@ -109,6 +109,6 @@ Before moving to the next phase, I confirmed that:
 
 ## Next Phase
 
-**Phase 2.5 — Linux Server Hardening**
+**Phase 3 — Logging & SIEM Preparation**
 
-In the next phase, I will improve the server's security by managing users, groups, permissions, and basic system hardening.
+In the next phase, I will configure system logging and prepare the server for Splunk integration so security events can be collected and analyzed.
