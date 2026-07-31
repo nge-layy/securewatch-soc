@@ -6,7 +6,7 @@ During this phase, I encountered several issues while configuring SSH remote acc
 
 ---
 
-## Problem 1 — SSH Authentication Failed
+## Problem 1 - SSH Authentication Failed
 
 ### Symptom
 
@@ -37,7 +37,7 @@ Receiving **"Permission denied"** usually means the network connection is workin
 
 ---
 
-## Problem 2 — Unable to Connect Through SSH
+## Problem 2 - Unable to Connect Through SSH
 
 ### Symptom
 
@@ -72,7 +72,7 @@ Before troubleshooting SSH itself, always verify that the network path exists. I
 
 ---
 
-## Problem 3 — Verifying the SSH Service
+## Problem 3 - Verifying the SSH Service
 
 ### Symptom
 
