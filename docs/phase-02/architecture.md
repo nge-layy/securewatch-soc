@@ -1,76 +1,158 @@
 # Phase 2 - Architecture & Connection Design
 
-## Network Path: Windows Host -> soc-server
+## Overview
 
-```mermaid
-flowchart LR
-    subgraph Windows["Windows 11 Host"]
-        Client["SSH Client\n(OpenSSH / PuTTY)"]
-        LocalPort["localhost:2222"]
-    end
+In Phase 1, the Ubuntu Server was connected to the internet using VirtualBox NAT networking. While this allowed the server to download updates, it also meant the Windows host could not connect directly to the virtual machine.
 
-    subgraph VBoxNAT["VirtualBox NAT Engine"]
-        Rule["Port Forward Rule\nHost 2222 → Guest 22"]
-    end
+To solve this, I configured **VirtualBox NAT Port Forwarding**. This allows only the SSH service to be accessed from my Windows computer while keeping the Ubuntu Server isolated from the rest of my home network.
 
-    subgraph Guest["soc-server (Ubuntu Server)"]
-        SSHD["sshd\nlistening on :22"]
-        Shell["Authenticated Shell Session"]
-    end
+This design follows the principle of exposing only the services that are required.
 
-    Client --> LocalPort --> Rule --> SSHD --> Shell
+---
+
+# Remote Administration Architecture
+
+```text
+                     Windows 11 Host
+               +-------------------------+
+               | SSH Client (OpenSSH)    |
+               |                         |
+               | ssh -p 2222 sam@127.0.0.1
+               +------------+------------+
+                            |
+                            |
+                     localhost:2222
+                            |
+                            ▼
+                VirtualBox NAT Engine
+            Port Forward: 2222 → 22
+                            |
+                            ▼
+              Ubuntu Server (soc-server)
+              SSH Server (sshd - Port 22)
+                            |
+                            ▼
+               Remote Terminal Session
 ```
 
-## Why I Used Port Forwarding
+---
 
-In Phase 1, I chose **NAT networking** to keep the Ubuntu Server isolated from my home network. However, NAT also means I can't connect directly to the virtual machine from Windows.
+# Port Forwarding Configuration
 
-To solve this, I configured **port forwarding** in VirtualBox. This forwards only the SSH port from my Windows computer to the Ubuntu Server, allowing me to connect securely using SSH.
+The following NAT rule was configured inside VirtualBox.
 
-This approach lets me manage the server remotely while keeping the rest of the virtual machine hidden from my home network.
+| Setting | Value |
+|----------|-------|
+| Name | SSH |
+| Protocol | TCP |
+| Host IP | 127.0.0.1 |
+| Host Port | 2222 |
+| Guest Port | 22 |
 
-## Port Forwarding Rule
+The Host IP was set to **127.0.0.1**, which means only the Windows host can access the forwarded port. Other devices on the home network cannot connect to the Ubuntu Server through this rule.
 
-| Name | Protocol | Host IP | Host Port | Guest IP | Guest Port |
-|---|---|---|---|---|---|
-| SSH | TCP | 127.0.0.1 | 2222 | (guest NAT IP) | 22 |
+---
 
-By setting the host IP to `127.0.0.1`, the forwarded SSH port can only be accessed from my Windows computer. Other devices on my home network cannot connect to it, which helps keep the virtual machine isolated and follows the security approach established in Phase 1.
+# Why I Used Port Forwarding
 
-## SSH Session Establishment (Detailed)
+Because the virtual machine uses NAT networking, it is hidden behind the Windows host.
 
-```mermaid
-sequenceDiagram
-    participant C as SSH Client
-    participant S as sshd
+Without port forwarding:
 
-    C->>S: TCP connection request
-    S->>C: SSH protocol version banner
-    C->>S: Client protocol version + key exchange init
-    Note over C,S: Diffie-Hellman key exchange establishes<br/>a shared session key
-    S->>C: Host key presented for verification
-    Note over C: Client checks host key against<br/>known_hosts (TOFU / trust-on-first-use)
-    C->>S: Authentication request (password or public key)
-    S->>C: Authentication result
-    Note over C,S: All subsequent traffic is symmetrically<br/>encrypted using the negotiated session key
-    S->>C: Interactive shell session begins
+- Windows cannot directly reach the Ubuntu Server.
+- SSH connections will fail.
+
+By forwarding port **2222** on the Windows host to port **22** on the Ubuntu Server, Windows can communicate with the SSH server while the VM remains isolated from the rest of the network.
+
+This provides a good balance between security and usability for a home lab.
+
+---
+
+# SSH Connection Process
+
+The remote connection follows these steps:
+
+1. I open PowerShell on Windows.
+2. I run the SSH command.
+
+```powershell
+ssh -p 2222 sam@127.0.0.1
 ```
 
-## Host Key Verification
+3. The SSH client connects to **localhost** on port **2222**.
+4. VirtualBox forwards the connection to port **22** inside the Ubuntu Server.
+5. The SSH server (`sshd`) receives the connection.
+6. After successful authentication, an encrypted terminal session is created.
 
-The first time I connected to the Ubuntu Server using SSH, Windows asked me to confirm the server's identity by displaying its host key fingerprint.
-After accepting it, the fingerprint is saved on my computer. Future SSH connections compare the saved fingerprint with the server's current fingerprint. If they don't match, SSH displays a warning because the server's identity may have changed.
-This helps protect against connecting to the wrong server or a malicious system pretending to be the real one.
+---
 
-## Service Boot Behavior
+# Host Key Verification
 
-```mermaid
-flowchart TB
-    Boot["System Boot"] --> Systemd["systemd init"]
-    Systemd --> Check{"Is sshd\nenabled?"}
-    Check -->|Yes| Start["sshd starts automatically"]
-    Check -->|No| Manual["sshd requires manual start\n(systemctl start sshd)"]
-    Start --> Listening["Listening on port 22\nready for connections"]
+The first time I connected to `soc-server`, SSH displayed the server's fingerprint and asked whether I trusted the server.
+
+After I accepted it, Windows saved the fingerprint in the **known_hosts** file.
+
+On future connections, SSH compares the stored fingerprint with the server's current fingerprint.
+
+If the fingerprint changes unexpectedly, SSH displays a warning because the server may have been reinstalled or someone may be attempting a man-in-the-middle attack.
+
+---
+
+# SSH Service Startup
+
+The SSH service is managed by **systemd**.
+
+```text
+System Boot
+      │
+      ▼
+systemd
+      │
+      ▼
+Is SSH Enabled?
+      │
+ ┌────┴─────┐
+ │          │
+Yes        No
+ │          │
+ ▼          ▼
+SSH Starts  Manual Start Required
+Automatically
 ```
 
-`systemctl enable` creates the symlinks that tell `systemd` to start the service at boot; `systemctl start` starts it for the current session only. Both were required to ensure `soc-server` is remotely reachable immediately after every reboot without manual intervention — critical for a server that, in a real deployment, might not have console access at all.
+Running
+
+```bash
+sudo systemctl enable ssh
+```
+
+configures SSH to start automatically whenever the server boots.
+
+Running
+
+```bash
+sudo systemctl start ssh
+```
+
+starts the SSH service immediately without waiting for the next reboot.
+
+Both commands were used to make sure the server is always available for remote administration.
+
+---
+
+# Security Considerations
+
+Several security decisions were made during this phase.
+
+- Only the SSH service is exposed through port forwarding.
+- The forwarded port is bound to **127.0.0.1**, preventing other devices on the home network from connecting.
+- NAT networking continues to isolate the Ubuntu Server from the LAN.
+- Password authentication was used initially to verify connectivity. SSH key authentication will be configured in a later hardening phase.
+
+---
+
+# Summary
+
+This architecture allows secure remote administration of `soc-server` without exposing the entire virtual machine to the home network.
+
+Using VirtualBox NAT together with port forwarding provides a simple and secure design that mirrors how administrators often access servers through controlled entry points while keeping unnecessary services hidden.
