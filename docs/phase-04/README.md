@@ -1,63 +1,84 @@
-# Phase 4 — Detection & Alerting
+# Phase 4 – Detection & Alerting
 
 ## Overview
 
-Phases 1–3 built the infrastructure a detection capability depends on: a hardened server, secure remote access, and a logging pipeline with correctly scoped read access for log collection. Phase 4 is where that pipeline is finally put to use — logs are ingested into Splunk, searched, correlated, and turned into an actual detection rule that fires when a real attack pattern (SSH brute forcing) occurs.
+After preparing the server and logging infrastructure in the previous phases, this phase focuses on transforming collected log data into actionable security monitoring using Splunk.
 
-This phase is the first point in the project where "logs exist" becomes "logs are useful." A log that nobody searches or alerts on has no security value — it's just disk usage.
+Rather than manually reviewing log files, I configured Splunk to ingest authentication logs, explored them using Splunk Search Processing Language (SPL), and built a detection for repeated SSH authentication failures. Finally, I generated test events to validate that the detection worked as expected.
 
-## Objective
+This phase represents the transition from simply collecting logs to actively monitoring the system for suspicious behavior—the primary purpose of any Security Information and Event Management (SIEM) platform.
 
-Detection engineering is the discipline of translating "what does malicious or suspicious behavior look like in our logs" into a repeatable, automated search that a SOC can rely on instead of manually reading logs line by line. SOC analysts write detection rules because:
+---
 
-- **Manual log review doesn't scale.** A single `auth.log` can contain dozens of authentication events per hour; a human can't watch it in real time.
-- **Consistency matters.** A written, saved detection rule applies the same logic every time it runs — a tired analyst scanning logs at 2 AM does not.
-- **Speed matters.** An automated alert can notify an analyst within minutes of a brute-force attempt starting, rather than being discovered during a much later manual review.
-- **It creates a record.** A triggered alert is itself evidence — a timestamped, repeatable data point that can support an investigation, unlike a one-off manual observation.
+## Objectives
 
-This phase specifically builds a detection rule for **SSH brute-force login attempts** — repeated failed password authentication against the `soc-server` host — using Splunk Search Processing Language (SPL) against the `auth.log` data already being collected as of Phase 3.
+During this phase I:
+
+- Configured Splunk to ingest Linux authentication logs.
+- Verified incoming events inside Splunk Search.
+- Learned basic Splunk Search Processing Language (SPL).
+- Built a detection for repeated failed SSH logins.
+- Converted the detection into a Splunk alert.
+- Simulated SSH brute-force attempts to validate the alert.
+- Documented the complete detection workflow.
+
+See `commands.md` for the complete command reference, `architecture.md` for the detection pipeline, and `troubleshooting.md` for issues encountered during configuration.
 
 ## Tasks Completed
 
-- Ran exploratory Splunk searches to confirm authentication log data was being indexed
-- Progressively scoped searches from broad (`index=*`) down to the specific log source and event type needed
-- Investigated and compared `sshd`-specific authentication events (accepted/failed passwords, session open/close, listener banners)
-- Built a working SPL query that isolates failed SSH password attempts and extracts the source IP address as a dedicated field
-- Saved that query as a **Scheduled Alert** named `SSH Brute Force Detection`, with **Severity: High**
-- Verified the alert fired successfully and appeared on the **Triggered Alerts** page
-- Built a dashboard (**SecureWatch Home SOC Dashboard**) visualizing failed login attempts, source IP frequency, and successful login activity
-- Cross-referenced successful SSH logins against other authentication events (`sudo`, `su`) to distinguish genuine SSH activity from unrelated authentication noise
+During this phase, I completed the following tasks:
 
-## Architecture — Where This Phase Fits
+- Verified that Linux authentication events from `/var/log/auth.log` were successfully indexed in Splunk.
+- Used progressively refined SPL searches, starting with broad searches (`index=*`) and narrowing them to SSH authentication events.
+- Investigated `sshd` events, including successful logins, failed logins, session creation, session termination, and daemon startup messages.
+- Built an SPL query to detect repeated failed SSH password authentication attempts and extracted the source IP address for analysis.
+- Saved the search as a **Scheduled Alert** named **SSH Brute Force Detection** with **High** severity.
+- Simulated failed SSH login attempts and verified that the alert triggered successfully.
+- Built a **SecureWatch Home SOC Dashboard** to visualize:
+  - Failed SSH login attempts
+  - Source IP address frequency
+  - Successful SSH login activity
+- Correlated successful SSH logins with related authentication events (such as `sudo`) to distinguish legitimate administrator activity from suspicious authentication attempts.
+
+## Architecture — Detection Pipeline
 
 ```mermaid
 flowchart LR
-    AuthLog["/var/log/auth.log\n(soc-server)"]
-    SplunkIdx["Splunk Index: main"]
-    SPL["SPL Search\n(SSH Brute Force Detection)"]
-    Alert["Scheduled Alert\nSeverity: High"]
-    Triggered["Triggered Alerts\n(Alert Manager)"]
-    Dashboard["SecureWatch Home SOC\nDashboard"]
+    AuthLog["/var/log/auth.log<br/>Ubuntu Server"]
+    Splunk["Splunk Enterprise<br/>Main Index"]
+    Search["SPL Detection Search"]
+    Alert["Scheduled Alert<br/>SSH Brute Force Detection"]
+    Triggered["Triggered Alerts"]
+    Dashboard["SecureWatch Home SOC Dashboard"]
 
-    AuthLog --> SplunkIdx --> SPL
-    SPL --> Alert --> Triggered
-    SPL --> Dashboard
+    AuthLog --> Splunk
+    Splunk --> Search
+    Search --> Alert
+    Alert --> Triggered
+    Search --> Dashboard
 ```
-
-The Phase 3 work (Splunk-readable `auth.log` via the `adm`-group-scoped `splunk` account) is the direct dependency this whole phase sits on top of — without that read access, none of the searches below would return data.
 
 ## Step-by-Step Summary
 
-1. Started with the broadest possible search to sanity-check that authentication failures were indexed anywhere at all.
-2. Narrowed the search to the specific log source (`/var/log/auth.log`) once broad searching confirmed the data existed.
-3. Reviewed all events from that source to understand the mix of event types actually present (SSH, `sudo`, `su`, cron, and some unrelated application noise).
-4. Filtered further to `sshd`-specific events to isolate SSH session activity (accepted logins, failed logins, session open/close, listener startup messages) from everything else sharing the same log file.
-5. Built a query that isolates **failed** password events specifically and extracts the attacking source IP into a structured field using `rex`.
-6. Saved that query as a scheduled, high-severity alert: **SSH Brute Force Detection**.
-7. Verified the alert actually fired by checking the **Triggered Alerts** page.
-8. Built a dashboard to visualize both failed and successful SSH login trends over time, plus the top source IPs generating failed attempts.
+1. Verified that Linux authentication events were successfully indexed in Splunk by performing a broad search (`index=*`). This confirmed that log ingestion was working before creating more specific searches.
 
-Full SPL detail is in the section below; troubleshooting is documented later in this file.
+2. Narrowed the search scope to Linux authentication logs (`/var/log/auth.log`) to focus the investigation on SSH-related activity.
+
+3. Reviewed the indexed authentication events to understand the different event types present, including successful SSH logins, failed login attempts, `sudo` activity, session creation, session termination, and other authentication-related messages.
+
+4. Refined the search to display only `sshd` events, isolating SSH authentication activity from unrelated system events.
+
+5. Built an SPL detection query that identifies failed SSH password authentication attempts and extracts the source IP address into a dedicated field using the `rex` command for easier analysis.
+
+6. Saved the detection as a **Scheduled Alert** named **SSH Brute Force Detection**, configured with **High** severity to automatically notify when the detection criteria are met.
+
+7. Simulated failed SSH login attempts and confirmed that the detection successfully generated alerts by verifying entries on the **Triggered Alerts** page.
+
+8. Built the **SecureWatch Home SOC Dashboard** to visualize authentication activity, including:
+   - Failed SSH login attempts
+   - Successful SSH logins
+   - Top source IP addresses responsible for failed login attempts
+   - Authentication trends over time
 
 ## SPL Queries
 
@@ -67,7 +88,7 @@ Full SPL detail is in the section below; troubleshooting is documented later in 
 index=* "Failed password"
 ```
 
-**Purpose:** Before building anything specific, this confirms — across every index Splunk has access to — that failed-password events exist at all. This is a deliberately unscoped, "does the data exist somewhere" query, useful as the very first step whenever building a new detection: prove the raw data is there before narrowing.
+**Purpose:** Before building anything specific, this confirms that across every index Splunk has access to  that failed-password events exist at all. This is a deliberately unscoped, "does the data exist somewhere" query, useful as the very first step whenever building a new detection: prove the raw data is there before narrowing.
 
 ![Initial broad search across all indexes](../../images/phase-04/01-initial-broad-search.png)
 *Screenshot placement: initial `index=* "Failed password"` search over a 30-day window, confirming failed-password events are being indexed before scoping the search further.*
@@ -104,7 +125,7 @@ Running the scoped query above over a wider window returned 60 events, including
 index=main source="/var/log/auth.log" sshd
 ```
 
-**Purpose:** Adding the `sshd` keyword filters the log down to lines actually generated by the SSH daemon — accepted/failed password attempts, session open/close events, and listener startup banners — separating them from `sudo`, `su`, and cron activity that shares the same file.
+**Purpose:** Adding the `sshd` keyword filters the log down to lines actually generated by the SSH daemon that accepted/failed password attempts, session open/close events, and listener startup banners — separating them from `sudo`, `su`, and cron activity that shares the same file.
 
 ![SSH-specific events, 10 results](../../images/phase-04/04-sshd-filtered-10events.png)
 *Screenshot placement: `index=main source="/var/log/auth.log" sshd` over the last 24 hours (10 events), showing a full SSH session lifecycle — listener startup, accepted password, session open, session close.*
@@ -146,7 +167,7 @@ index=main source="/var/log/auth.log" "Failed password"
 ![SSH Brute Force Detection query results](../../images/phase-04/07-brute-force-query-results.png)
 *Screenshot placement: a closer view of the same query's results — repeated `Failed password for samm from 10.0.2.2` events across two separate SSH session IDs, the pattern the alert is built to catch.*
 
-> **Note:** This query hardcodes a single source IP (`10.0.2.2`) for testing and verification purposes — it confirms the `rex` extraction and filtering logic work correctly against a known source. A more general production version of this detection would replace the final `search` clause with a **statistical threshold**, for example:
+> **Note:** This query hardcodes a single source IP (`10.0.2.2`) for testing and verification purposes which  confirms the `rex` extraction and filtering logic work correctly against a known source. A more general production version of this detection would replace the final `search` clause with a **statistical threshold**, for example:
 > ```spl
 > index=main source="/var/log/auth.log" "Failed password"
 > | rex "from (?<src_ip>\d+\.\d+\.\d+\.\d+)"
@@ -167,7 +188,7 @@ index=main source="/var/log/auth.log" "Failed password"
 
 **Why Scheduled over Real-Time:** A scheduled search runs on a defined interval and evaluates a defined time window each time, which is more resource-efficient in a home-lab environment than a continuously running real-time search, while still providing timely detection for a threat like brute-forcing that plays out over multiple attempts rather than a single instant.
 
-**Why Severity: High:** Repeated failed SSH authentication attempts against a server are a leading indicator of an active brute-force attack — treating this as high severity ensures it's not lost among lower-priority informational alerts.
+**Why Severity: High:** Repeated failed SSH authentication attempts against a server are a leading indicator of an active brute-force attack that treating this as high severity ensures it's not lost among lower-priority informational alerts.
 
 ![Triggered Alerts page](../../images/phase-04/08-triggered-alerts-page.png)
 *Screenshot placement: the Triggered Alerts page confirming `SSH Brute Force Detection` fired at 2026-07-27 08:15:01 UTC, Type: Scheduled, Severity: High, Mode: Digest — proof the alert is not just saved but actually executing and detecting matching events.*
@@ -197,7 +218,7 @@ A dashboard (**SecureWatch Home SOC Dashboard**) was built to give an at-a-glanc
 *Screenshot placement: the "SSH Failed Login Attempts" time-series panel (showing a spike of 7 failed attempts around a specific hour) alongside the "Top Source IP Addresses" panel, which aggregates failed attempts by `src_ip` — visually reinforcing which source is responsible for the brute-force activity the alert is built to catch.*
 
 ![Dashboard — successful logins and recent authentication events](../../images/phase-04/10-dashboard-successful-logins.png)
-*Screenshot placement: the "Successful SSH Logins" time-series panel alongside a "Recent Authentication Events" table, which lists raw authentication-related log lines (including `sudo`/`su` activity such as elevating to the `splunk` service account) — used to distinguish genuine SSH login trends from the broader mix of authentication events sharing the same log source.*
+*Screenshot placement: the "Successful SSH Logins" time-series panel alongside a "Recent Authentication Events" table, which lists raw authentication-related log lines (including `sudo`/`su` activity such as elevating to the `splunk` service account)  used to distinguish genuine SSH login trends from the broader mix of authentication events sharing the same log source.*
 
 ## Problems Encountered
 
@@ -207,11 +228,11 @@ A dashboard (**SecureWatch Home SOC Dashboard**) was built to give an at-a-glanc
 
 **Root Cause:** Searching without scoping to a specific index/source is appropriate as a first sanity check, but is not efficient or precise enough to build a reliable detection query on top of.
 
-**Solution:** Progressively scoped the search down — first to `index=main source="/var/log/auth.log"`, then further to `sshd`-specific events — narrowing one variable at a time rather than jumping straight to a complex final query.
+**Solution:** Progressively scoped the search down that first to `index=main source="/var/log/auth.log"`, then further to `sshd`-specific events that narrowing one variable at a time rather than jumping straight to a complex final query.
 
 **Verification:** Each narrowing step's result count and event content were manually reviewed before moving to the next level of specificity, confirmed by the searches shown in Queries #2–#4 above.
 
-**Lessons Learned:** Building a detection query is an iterative process — starting broad and narrowing step by step makes it much easier to catch a wrong assumption early, rather than debugging a single complex query with several filtering clauses at once.
+**Lessons Learned:** Building a detection query is an iterative process that starting broad and narrowing step by step makes it much easier to catch a wrong assumption early, rather than debugging a single complex query with several filtering clauses at once.
 
 ---
 
@@ -219,13 +240,13 @@ A dashboard (**SecureWatch Home SOC Dashboard**) was built to give an at-a-glanc
 
 **Symptoms:** The unfiltered `index=main source="/var/log/auth.log"` search (Query #3) returned events that had nothing to do with authentication at all — including an unrelated `mongod` plugin-lookup error message.
 
-**Root Cause:** `auth.log` (and the broader logging pipeline feeding it) is not exclusively used by PAM/SSH — any process on the host that happens to log through the same facility can end up mixed into the same file and, by extension, the same Splunk source.
+**Root Cause:** `auth.log` (and the broader logging pipeline feeding it) is not exclusively used by PAM/SSH that any process on the host that happens to log through the same facility can end up mixed into the same file and, by extension, the same Splunk source.
 
 **Solution:** Rather than filtering on the source alone, an additional keyword filter (`sshd`) was added to isolate genuinely SSH-related lines, and the detection query itself filters specifically on the `"Failed password"` string rather than relying on source scoping alone to guarantee relevance.
 
 **Verification:** Confirmed by comparing the unfiltered 60-event result set (Query #3) against the `sshd`-filtered result sets (Query #4), where the unrelated noise no longer appeared.
 
-**Lessons Learned:** Never assume a log source contains only the event type implied by its name — reviewing raw, unfiltered results before writing a detection rule is what catches this kind of contamination before it becomes a false-positive problem in production.
+**Lessons Learned:** Never assume a log source contains only the event type implied by its name - reviewing raw, unfiltered results before writing a detection rule is what catches this kind of contamination before it becomes a false-positive problem in production.
 
 ---
 
@@ -233,7 +254,7 @@ A dashboard (**SecureWatch Home SOC Dashboard**) was built to give an at-a-glanc
 
 **Symptoms:** Both SSH activity (`sshd`) and administrative activity (`sudo`, `su` — such as a user elevating to the `splunk` service account to restart Splunk) appeared in the same log source, making it initially unclear which lines belonged to which subsystem.
 
-**Root Cause:** As established in Phase 3, `auth.log` is the shared destination for **any** PAM-integrated authentication event — SSH, `sudo`, and `su` are all PAM-integrated, so they all land in the same file by design, not by misconfiguration.
+**Root Cause:** As established in Phase 3, `auth.log` is the shared destination for **any** PAM-integrated authentication event - SSH, `sudo`, and `su` are all PAM-integrated, so they all land in the same file by design, not by misconfiguration.
 
 **Solution:** Used the `sshd` keyword to explicitly scope to SSH daemon events for the brute-force detection query, while separately reviewing `sudo`/`su` lines (visible in the "Recent Authentication Events" dashboard panel) as their own category of activity rather than conflating them with SSH login attempts.
 
@@ -245,7 +266,7 @@ A dashboard (**SecureWatch Home SOC Dashboard**) was built to give an at-a-glanc
 
 - Detection engineering is fundamentally iterative: broad search → scope to source → scope to event type → build the precise detection logic. Skipping steps makes debugging a failing query much harder.
 - A log source's name (`auth.log`) is a strong hint, not a guarantee, of what it contains — validating actual event content beats assuming based on the file name alone.
-- A working detection query and a **triggering** alert are two different things worth verifying separately — a search can return correct results when run manually while a saved scheduled alert still fails to fire due to scheduling or permission issues, so checking the Triggered Alerts page specifically matters.
+- A working detection query and a **triggering** alert are two different things worth verifying separately which a search can return correct results when run manually while a saved scheduled alert still fails to fire due to scheduling or permission issues, so checking the Triggered Alerts page specifically matters.
 - Hardcoding a single test IP in a detection query is a reasonable way to validate logic during development, but a production-ready version should generalize to a statistical threshold rather than a fixed value.
 
 ## References
@@ -256,4 +277,4 @@ A dashboard (**SecureWatch Home SOC Dashboard**) was built to give an at-a-glanc
 
 ## Next Phase
 
-➡️ [Phase 5 — Windows Integration & Lab Expansion](../phase-05/README.md): expanding the lab beyond a single Ubuntu server to include a Windows client and a Kali Linux attacker VM, laying the groundwork for realistic, multi-host detection scenarios.
+[Phase 5 — Windows Integration & Lab Expansion](../phase-05/README.md): expanding the lab beyond a single Ubuntu server to include a Windows client and a Kali Linux attacker VM, laying the groundwork for realistic, multi-host detection scenarios.
