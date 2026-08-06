@@ -40,7 +40,7 @@ During this phase, I completed the following tasks:
   - Successful SSH login activity
 - Correlated successful SSH logins with related authentication events (such as `sudo`) to distinguish legitimate administrator activity from suspicious authentication attempts.
 
-## Architecture — Detection Pipeline
+## Architecture 
 
 ```mermaid
 flowchart LR
