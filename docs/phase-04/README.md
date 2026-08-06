@@ -1,4 +1,4 @@
-# Phase 4 – Detection & Alerting
+# Phase 4 - Detection & Alerting
 
 ## Overview
 
