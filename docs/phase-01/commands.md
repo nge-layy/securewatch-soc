@@ -100,47 +100,6 @@ View the amount of installed and available memory.
 
 ---
 
-## 7. Create the Project Folder
-
-```bash
-mkdir -p ~/projects/securewatch-home-soc/{notes,scripts,configs}
-```
-
-**Purpose**
-
-Create folders to organize project notes, scripts, and configuration files.
-
----
-
-## 8. Verify the Folder Structure
-
-If the **tree** package is installed:
-
-```bash
-tree ~/projects/securewatch-home-soc
-```
-
-Or use:
-
-```bash
-ls -R ~/projects/securewatch-home-soc
-```
-
-**Purpose**
-
-Verify that the project folders were created successfully.
-
-**Example Output**
-
-```text
-securewatch-home-soc
-├── configs
-├── notes
-└── scripts
-```
-
----
-
 ## Summary
 
 During this phase I learned how to:
@@ -149,6 +108,5 @@ During this phase I learned how to:
 - Verify internet and DNS access.
 - Update an Ubuntu Server.
 - View basic system information.
-- Organize project files using a simple folder structure.
 
 These basic Linux commands provide the foundation for the next phases of the SecureWatch Home SOC project.
