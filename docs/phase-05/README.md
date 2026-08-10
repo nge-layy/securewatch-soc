@@ -138,13 +138,13 @@ Why this is useful: Multiple [preauth] failures from the same IP within a short 
 
 ## Section 6 - Verification
 
-| What Was Verified | How |
-|---|---|
-| SSH connectivity between `kali-attacker` and `soc-server` | Confirmed via the successful `Accepted password` event in Section 3, and via Nmap reporting port 22 open with a fingerprinted SSH banner in Section 2 |
-| Splunk log ingestion from the new activity | Confirmed by running `index=main source="/var/log/auth.log"` searches and seeing new events appear with the correct `192.168.56.102` source IP, matching timestamps to when the activity was actually performed |
-| Alert triggering | Checked directly on the Triggered Alerts page — result documented honestly in Section 7, Problem 1: no new alert instance appeared for this phase's activity |
-| Authentication events | Confirmed via the baseline (`Accepted password`), brute-force (`Failed password`), and unrelated (`sudo`) searches, each returning the expected event types and fields |
-| Nmap-related SSH events | Confirmed by correlating the `[preauth]` negotiation-failure timestamps in Splunk against the time the Nmap scan was actually run on `kali-attacker` |
+| Verified              | Result                                                                              |
+| --------------------- | ----------------------------------------------------------------------------------- |
+| SSH connectivity      | Confirmed with a successful SSH login and Nmap scan.                                |
+| Splunk log ingestion  | Confirmed that new `auth.log` events appeared in Splunk with the correct source IP. |
+| Alert triggering      | No new alerts were generated during this phase.                                     |
+| Authentication events | Confirmed successful logins, failed logins, and `sudo` events were collected.       |
+| Nmap SSH events       | Confirmed `[preauth]` events matched the Nmap scan timestamps.                      |
 
 ## Section 7 - Problems Encountered
 
