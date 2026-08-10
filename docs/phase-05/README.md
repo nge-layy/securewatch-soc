@@ -209,4 +209,4 @@ Universal Forwarder installation on `win-client` has been started, but Windows l
 
 ## Next Phase
 
-Phase 6 — Incident Response *(planned)*: using the multi-host activity captured in this phase (reconnaissance, baseline login, and brute-force simulation) as the basis for a documented investigation and response workflow, and generalizing the SSH Brute Force Detection alert identified as a gap in Section 7.
+Phase 6 - Incident Response *(planned)*: using the multi-host activity captured in this phase (reconnaissance, baseline login, and brute-force simulation) as the basis for a documented investigation and response workflow, and generalizing the SSH Brute Force Detection alert identified as a gap in Section 7.
