@@ -24,7 +24,7 @@ All VMs communicate through the internal lab network, allowing `kali-attacker` t
 | `soc-server` | `192.168.56.101` | Target of the Nmap scan in Section 5 |
 | `kali-attacker` | `192.168.56.102` | Source IP recorded on every SSH event in Splunk during this phase |
 
-This is the first phase where `kali-attacker` is used for its actual purpose — generating traffic against `soc-server` — rather than just being provisioned and network-configured.
+This is the first phase where `kali-attacker` is used for its actual purpose to generate traffic against `soc-server` and rather than just being provisioned and network-configured.
 
 ## Section 2 - Network Verification
 
