@@ -46,7 +46,7 @@ nmap -sV 192.168.56.101
 
 This single result confirms several things at once: the host is reachable on the network, SSH is available (needed for Sections 3–4), and the Splunk web (`8000`) and management (`8089`) ports are visible from `kali-attacker` — meaning `soc-server`'s Splunk instance is exposed on this network segment, not just on `localhost`.
 
-![Nmap scan from kali-attacker against soc-server](../../images/phase-05/08-nmap-scan-kali-terminal.png)
+![Nmap scan from kali-attacker against soc-server](docs/phase-05/08-nmap-scan-kali-terminal.png)
 *Screenshot placement: terminal on `kali-attacker` running `nmap -sV 192.168.56.101` followed by `sudo nmap -A 192.168.56.101`, confirming network reachability and enumerating the open SSH, PostgreSQL, and Splunk services on `soc-server`.*
 
 ## Section 3 – SSH Baseline Test
