@@ -165,7 +165,7 @@ index=main source="/var/log/auth.log" "Failed password"
 *Screenshot: the full detection query with `rex` field extraction, returning 6 matching failed-password events, all from source IP `10.0.2.2` against user `samm`.*
 
 ![SSH Brute Force Detection query results](07-brute-force-query-results.png)
-*Screenshot placement: a closer view of the same query's results — repeated `Failed password for samm from 10.0.2.2` events across two separate SSH session IDs, the pattern the alert is built to catch.*
+*Screenshot: a closer view of the same query's results — repeated `Failed password for samm from 10.0.2.2` events across two separate SSH session IDs, the pattern the alert is built to catch.*
 
 > **Note:** This query hardcodes a single source IP (`10.0.2.2`) for testing and verification purposes which  confirms the `rex` extraction and filtering logic work correctly against a known source. A more general production version of this detection would replace the final `search` clause with a **statistical threshold**, for example:
 > ```spl
