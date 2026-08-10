@@ -69,7 +69,7 @@ sshd[1342]: Server listening on 0.0.0.0 port 22.
 ![Baseline successful SSH login from Kali](10-ssh-baseline-accepted-login.jpg)
 *Screenshot: Splunk search results showing the successful `Accepted password for samm from 192.168.56.102` login, the corresponding session-opened event, and the connection being closed cleanly that the baseline "normal" SSH activity pattern.*
 
-This confirms two things: `kali-attacker` can successfully authenticate to `soc-server` over SSH, and that successful authentication is correctly captured in Splunk with the correct source IP — the same field the brute-force detection logic depends on.
+This confirms two things: `kali-attacker` can successfully authenticate to `soc-server` over SSH, and that successful authentication is correctly captured in Splunk with the correct source IP and the same field the brute-force detection logic depends on.
 
 ## Section 4 - SSH Brute Force Simulation
 
