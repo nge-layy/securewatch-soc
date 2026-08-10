@@ -150,7 +150,7 @@ Why this is useful: Multiple [preauth] failures from the same IP within a short 
 
 ### Problem 1: Brute-force simulation did not produce a new Triggered Alert
 
-**Symptoms:** After generating 5 failed SSH login attempts from `kali-attacker` (`192.168.56.102`) and confirming via the `stats count by src_ip` query that the detection logic correctly identified the activity, the **Triggered Alerts** page still showed only the original alert instance from `2026-07-27 08:15:01 UTC` — no new entry for this phase's activity appeared.
+**Symptoms:** After generating 5 failed SSH login attempts from `kali-attacker` (`192.168.56.102`) and confirming via the `stats count by src_ip` query that the detection logic correctly identified the activity, the **Triggered Alerts** page still showed only the original alert instance from `2026-07-27 08:15:01 UTC` and no new entry for this phase's activity appeared.
 
 **Root Cause:** The saved, scheduled alert (`SSH Brute Force Detection`, configured in Phase 4) uses the original test query, which filters explicitly to a hardcoded source IP:
 ```spl
@@ -161,7 +161,7 @@ index=main source="/var/log/auth.log" "Failed password"
 This query only ever matches failed attempts from `10.0.2.2` — the IP used during Phase 4 testing. Since `kali-attacker`'s address (`192.168.56.102`) does not match that hardcoded filter, the saved alert has no way to fire for this phase's brute-force activity, regardless of how many failed attempts occurred.
 
 ![Triggered Alerts page still showing only the original instance](15-triggered-alerts-unchanged.jpg)
-*Screenshot: the Triggered Alerts page showing only the single `2026-07-27 08:15:01 UTC` entry — no new trigger corresponding to the Aug 5 activity from `kali-attacker`.*
+*Screenshot: the Triggered Alerts page showing only the single `2026-07-27 08:15:01 UTC` entry and no new trigger corresponding to the Aug 5 activity from `kali-attacker`.*
 
 ![The saved alert's underlying query, scoped to the original test IP](16-original-alert-search-hardcoded-ip.jpg)
 *Screenshot: the original saved search behind the alert, confirming the hardcoded `search src_ip="10.0.2.2"` filter that explains why it did not fire for the new attacker IP.*
