@@ -61,7 +61,7 @@ Documentation: [Phase 4](docs/phase-04/README.md)
 
 ---
 
-### Phase 5 - Attack Simulation (Planned)
+### Phase 5 - Attack Simulation (Completed)
 - simulated realistic attacks against the lab to generate security events for analysis.
 
 Documentation: [Phase 5](docs/phase-05/README.md)
