@@ -46,7 +46,7 @@ nmap -sV 192.168.56.101
 
 This single result confirms several things at once: the host is reachable on the network, SSH is available (needed for Sections 3–4), and the Splunk web (`8000`) and management (`8089`) ports are visible from `kali-attacker` — meaning `soc-server`'s Splunk instance is exposed on this network segment, not just on `localhost`.
 
-![Nmap scan from kali-attacker against soc-server](../../images/phase-05/08-nmap-scan-kali-terminal.png)
+![Nmap scan from kali-attacker against soc-server](docs/phase-05/08-nmap-scan-kali-terminal.jpg)
 *Screenshot placement: terminal on `kali-attacker` running `nmap -sV 192.168.56.101` followed by `sudo nmap -A 192.168.56.101`, confirming network reachability and enumerating the open SSH, PostgreSQL, and Splunk services on `soc-server`.*
 
 ## Section 3 – SSH Baseline Test
@@ -65,7 +65,7 @@ sshd[1342]: Server listening on :: port 22.
 sshd[1342]: Server listening on 0.0.0.0 port 22.
 ```
 
-![Baseline successful SSH login from Kali](../../images/phase-05/10-ssh-baseline-accepted-login.png)
+![Baseline successful SSH login from Kali](docs/phase-05/10-ssh-baseline-accepted-login.jpg)
 *Screenshot placement: Splunk search results showing the successful `Accepted password for samm from 192.168.56.102` login, the corresponding session-opened event, and the connection being closed cleanly — the baseline "normal" SSH activity pattern.*
 
 This confirms two things: `kali-attacker` can successfully authenticate to `soc-server` over SSH, and that successful authentication is correctly captured in Splunk with the correct source IP — the same field the brute-force detection logic depends on.
@@ -87,7 +87,7 @@ sshd-session[24431]: Failed password for samm from 192.168.56.102 port 38068 ssh
 sshd-session[24391]: Failed password for samm from 192.168.56.102 port 34040 ssh2
 ```
 
-![Failed SSH password attempts from Kali](../../images/phase-05/11-ssh-bruteforce-failed-password-events.png)
+![Failed SSH password attempts from Kali](docs/phase-05/11-ssh-bruteforce-failed-password-events.jpg)
 *Screenshot placement: Splunk search results showing 5 `Failed password` events generated from `192.168.56.102` during the simulated brute-force window.*
 
 **Aggregated detection query (the improved version of the Phase 4 detection logic, generalized to any source IP rather than a single hardcoded address):**
@@ -105,7 +105,7 @@ index=main source="/var/log/auth.log" "Failed password"
 |---|---|
 | 192.168.56.102 | 5 |
 
-![Failed-login count grouped by source IP](../../images/phase-05/12-ssh-bruteforce-stats-count-by-srcip.png)
+![Failed-login count grouped by source IP](docs/phase-05/12-ssh-bruteforce-stats-count-by-srcip.jpg)
 *Screenshot placement: the `stats count by src_ip` query correctly aggregating all 5 failed attempts under `192.168.56.102`, proving the field-extraction and aggregation logic identifies the attacking host on its own, without needing to know the IP in advance.*
 
 **What this proves:** The `rex`/`stats` detection logic correctly and automatically identifies `kali-attacker` as the source generating repeated failed logins, using the exact same query structure introduced in Phase 4 — but now validated against real, externally generated brute-force traffic instead of a single test IP. This confirms the underlying search logic works correctly on its own.
@@ -124,7 +124,7 @@ Their offer: diffie-hellman-group1-sha1,diffie-hellman-group14-sha1,diffie-hellm
 diffie-hellman-group16-sha512,diffie-hellman-group-exchange-sha1,diffie-hellman-group-exchange-sha256 [preauth]
 ```
 
-![SSH pre-authentication negotiation failures from the Nmap scan](../../images/phase-05/09-nmap-preauth-negotiation-events.png)
+![SSH pre-authentication negotiation failures from the Nmap scan](docs/phase-05/09-nmap-preauth-negotiation-events.jpg)
 *Screenshot placement: repeated `Unable to negotiate ... [preauth]` events in Splunk, each tied to a separate `sshd-session` ID, generated during the Nmap service-detection scan against `soc-server`'s SSH port.*
 
 **Why this happened:** Nmap's service/version detection probe (`-sV`/`-A`) connects to the SSH port and offers a fixed, generic set of key-exchange algorithms as part of fingerprinting the service — including older algorithms like `diffie-hellman-group1-sha1` that this server's OpenSSH version (10.2p1) no longer supports by default for security reasons. The two sides can't agree on a key-exchange method, so the SSH connection is torn down during the negotiation phase itself.
@@ -159,10 +159,10 @@ index=main source="/var/log/auth.log" "Failed password"
 ```
 This query only ever matches failed attempts from `10.0.2.2` — the IP used during Phase 4 testing. Since `kali-attacker`'s address (`192.168.56.102`) does not match that hardcoded filter, the saved alert has no way to fire for this phase's brute-force activity, regardless of how many failed attempts occurred.
 
-![Triggered Alerts page still showing only the original instance](../../images/phase-05/15-triggered-alerts-unchanged.png)
+![Triggered Alerts page still showing only the original instance](docs/phase-05/15-triggered-alerts-unchanged.jpg)
 *Screenshot placement: the Triggered Alerts page showing only the single `2026-07-27 08:15:01 UTC` entry — no new trigger corresponding to the Aug 5 activity from `kali-attacker`.*
 
-![The saved alert's underlying query, scoped to the original test IP](../../images/phase-05/16-original-alert-search-hardcoded-ip.png)
+![The saved alert's underlying query, scoped to the original test IP](docs/phase-05/16-original-alert-search-hardcoded-ip.jpg)
 *Screenshot placement: the original saved search behind the alert, confirming the hardcoded `search src_ip="10.0.2.2"` filter that explains why it did not fire for the new attacker IP.*
 
 **Solution:** Not yet applied to the saved alert. The manually-run `stats count by src_ip` query (Section 4) already demonstrates the correct, generalized replacement logic — the saved alert itself still needs to be updated to use that version instead of the hardcoded IP filter. This is being tracked as a follow-up rather than resolved in this phase, since applying it live would change previously-documented Phase 4 configuration.
@@ -179,7 +179,7 @@ This query only ever matches failed attempts from `10.0.2.2` — the IP used dur
 
 **Root Cause:** The password was mistyped twice in a row when prompted by `sudo`, exhausting the default retry limit of three attempts.
 
-![Terminal showing repeated sudo authentication failures](../../images/phase-05/13-sudo-authentication-failure-terminal.png)
+![Terminal showing repeated sudo authentication failures](docs/phase-05/13-sudo-authentication-failure-terminal.jpg)
 *Screenshot placement: terminal on `soc-server` showing `sudo apt update` failing twice with `Authentication failed, try again.`, followed by the `maximum 3 incorrect authentication attempts` lockout message.*
 
 **Solution:** Re-ran the command in a fresh attempt and entered the correct password, which succeeded without further issue.
@@ -191,7 +191,7 @@ sudo: pam_unix(sudo:session): session opened for root by samm
 sudo: samm : TTY=/dev/tty1 ; PWD=/home/samm ; USER=root ; COMMAND=/usr/bin/su - splunk
 ```
 
-![Splunk capturing the sudo authentication failure](../../images/phase-05/14-sudo-authentication-failure-splunk.png)
+![Splunk capturing the sudo authentication failure](docs/phase-05/14-sudo-authentication-failure-splunk.jpg)
 *Screenshot placement: Splunk search `index=main source="/var/log/auth.log" sudo` showing the authentication-failure event alongside subsequent successful `sudo` activity, confirming both the mistake and the recovery were logged accurately.*
 
 **Lesson Learned:** This wasn't an attack, but it's a useful reminder that the same logging pipeline built to catch malicious activity also faithfully captures ordinary operator mistakes — which is exactly the intended behavior. It's also a small real-world reminder of why account lockout thresholds exist: even a legitimate, authorized user can trip one accidentally.
@@ -208,4 +208,4 @@ Universal Forwarder installation on `win-client` has been started, but Windows l
 
 ## Next Phase
 
-➡️ Phase 6 — Incident Response *(planned)*: using the multi-host activity captured in this phase (reconnaissance, baseline login, and brute-force simulation) as the basis for a documented investigation and response workflow, and generalizing the SSH Brute Force Detection alert identified as a gap in Section 7.
+Phase 6 — Incident Response *(planned)*: using the multi-host activity captured in this phase (reconnaissance, baseline login, and brute-force simulation) as the basis for a documented investigation and response workflow, and generalizing the SSH Brute Force Detection alert identified as a gap in Section 7.
