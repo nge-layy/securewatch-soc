@@ -1,20 +1,21 @@
-# Phase 5 – Attack Simulation & Lab Expansion
+# Phase 5 - Attack Simulation & Lab Expansion
 
 ## Phase Objective
 
-Phases 1–4 built a hardened, logged, and monitored single-node SOC — but a detection rule that has only ever been tested against synthetic or single-source data isn't proven yet. Phase 5 expands the lab into a small multi-host environment and uses it to generate **real security events**: a genuine reconnaissance scan, a genuine baseline login, and a genuine brute-force pattern, all captured by Splunk exactly as they'd appear from an actual attacker on the network. The goal is to validate the logging and detection pipeline built in earlier phases against activity that wasn't hand-crafted to match it.
+Expand the SOC lab into a small multi-host environment and generate real security events, including normal SSH logins, network scans, and brute-force attacks. The goal is to verify that Splunk correctly collects and detects real attack activity.
 
-## Section 1 – Lab Expansion
+## Section 1 - Lab Expansion
 
-The lab now includes three virtual machines, each with a distinct role:
+The lab now consists of three virtual machines:
 
-| VM | Role | Purpose in This Phase |
-|---|---|---|
-| `soc-server` (SecureWatch-Ubuntu-SOC) | Ubuntu Server running Splunk Enterprise | The monitored target — the host being scanned and logged against |
-| `kali-attacker` | Kali Linux | The attacker-simulation host — used to run reconnaissance and SSH brute-force activity against `soc-server` |
-| `win-client` | Windows client | Lab endpoint reserved for future Windows log collection (see Section 8) |
+| VM              | Role                      | Purpose                                              |
+| --------------- | ------------------------- | ---------------------------------------------------- |
+| `soc-server`    | Ubuntu Server with Splunk | Monitored target and log collection server           |
+| `kali-attacker` | Kali Linux                | Simulates reconnaissance and SSH brute-force attacks |
+| `win-client`    | Windows Client            | Reserved for future Windows log collection           |
 
-All three VMs communicate over the lab's internal networking (Host-Only and NAT adapters, established during earlier lab-expansion work), which is what allows `kali-attacker` to reach `soc-server` directly by IP address rather than through the host machine.
+All VMs communicate through the internal lab network, allowing `kali-attacker` to directly access `soc-server` for realistic attack simulation.
+
 
 **IP addressing confirmed during this phase's testing:**
 
@@ -25,7 +26,7 @@ All three VMs communicate over the lab's internal networking (Host-Only and NAT 
 
 This is the first phase where `kali-attacker` is used for its actual purpose — generating traffic against `soc-server` — rather than just being provisioned and network-configured.
 
-## Section 2 – Network Verification
+## Section 2 - Network Verification
 
 Before treating any SSH or Nmap activity as meaningful, basic reachability and service availability from `kali-attacker` to `soc-server` were confirmed directly through the Nmap scan itself, since a live port/service scan is a strong combined test of both connectivity and service state.
 
@@ -35,7 +36,7 @@ nmap -sV 192.168.56.101
 
 **Why this command was used:** `nmap -sV` performs a TCP port scan against the target and additionally attempts to fingerprint the exact service and version listening on each open port. Running this from `kali-attacker` toward `soc-server` verifies, in a single step, that the two hosts can communicate on the network **and** confirms which services are actually reachable and what they identify themselves as.
 
-**Result — ports found open on `soc-server` (192.168.56.101):**
+**Result - ports found open on `soc-server` (192.168.56.101):**
 
 | Port | State | Service | Version |
 |---|---|---|---|
@@ -44,16 +45,16 @@ nmap -sV 192.168.56.101
 | 8000/tcp | open | http | Splunkd httpd |
 | 8089/tcp | open | ssl/http | Splunkd httpd |
 
-This single result confirms several things at once: the host is reachable on the network, SSH is available (needed for Sections 3–4), and the Splunk web (`8000`) and management (`8089`) ports are visible from `kali-attacker` — meaning `soc-server`'s Splunk instance is exposed on this network segment, not just on `localhost`.
+This single result confirms several things at once: the host is reachable on the network, SSH is available (needed for Sections 3–4), and the Splunk web (`8000`) and management (`8089`) ports are visible from `kali-attacker` which meaning `soc-server`'s Splunk instance is exposed on this network segment, not just on `localhost`.
 
 ![Nmap scan from kali-attacker against soc-server](08-nmap-scan-kali-terminal.jpg)
-*Screenshot placement: terminal on `kali-attacker` running `nmap -sV 192.168.56.101` followed by `sudo nmap -A 192.168.56.101`, confirming network reachability and enumerating the open SSH, PostgreSQL, and Splunk services on `soc-server`.*
+*Screenshot: terminal on `kali-attacker` running `nmap -sV 192.168.56.101` followed by `sudo nmap -A 192.168.56.101`, confirming network reachability and enumerating the open SSH, PostgreSQL, and Splunk services on `soc-server`.*
 
-## Section 3 – SSH Baseline Test
+## Section 3 - SSH Baseline Test
 
 Before simulating any attack, a normal, successful SSH login from `kali-attacker` to `soc-server` was performed and confirmed in Splunk.
 
-**Why test a normal login first:** A detection rule is only meaningful if it's compared against a known-good baseline. Confirming what a *legitimate* login looks like in the logs — correct source IP, expected `Accepted password` event, clean session open/close — establishes the pattern that later brute-force activity should visibly deviate from. It also confirms the logging pipeline (established in Phase 3) is correctly capturing events from this new source host before any attack traffic is generated.
+**Why test a normal login first**: Before simulating attacks, a successful SSH login is performed to confirm that Splunk is correctly collecting normal authentication events. This establishes a baseline for comparing later brute-force activity.
 
 **Observed events in `auth.log` / Splunk:**
 
@@ -66,11 +67,11 @@ sshd[1342]: Server listening on 0.0.0.0 port 22.
 ```
 
 ![Baseline successful SSH login from Kali](10-ssh-baseline-accepted-login.jpg)
-*Screenshot placement: Splunk search results showing the successful `Accepted password for samm from 192.168.56.102` login, the corresponding session-opened event, and the connection being closed cleanly — the baseline "normal" SSH activity pattern.*
+*Screenshot: Splunk search results showing the successful `Accepted password for samm from 192.168.56.102` login, the corresponding session-opened event, and the connection being closed cleanly that the baseline "normal" SSH activity pattern.*
 
 This confirms two things: `kali-attacker` can successfully authenticate to `soc-server` over SSH, and that successful authentication is correctly captured in Splunk with the correct source IP — the same field the brute-force detection logic depends on.
 
-## Section 4 – SSH Brute Force Simulation
+## Section 4 - SSH Brute Force Simulation
 
 With a working baseline confirmed, repeated failed SSH login attempts were generated from `kali-attacker` against `soc-server` to simulate brute-force activity.
 
@@ -88,7 +89,7 @@ sshd-session[24391]: Failed password for samm from 192.168.56.102 port 34040 ssh
 ```
 
 ![Failed SSH password attempts from Kali](11-ssh-bruteforce-failed-password-events.jpg)
-*Screenshot placement: Splunk search results showing 5 `Failed password` events generated from `192.168.56.102` during the simulated brute-force window.*
+*Screenshot: Splunk search results showing 5 `Failed password` events generated from `192.168.56.102` during the simulated brute-force window.*
 
 **Aggregated detection query (the improved version of the Phase 4 detection logic, generalized to any source IP rather than a single hardcoded address):**
 
@@ -106,15 +107,15 @@ index=main source="/var/log/auth.log" "Failed password"
 | 192.168.56.102 | 5 |
 
 ![Failed-login count grouped by source IP](12-ssh-bruteforce-stats-count-by-srcip.jpg)
-*Screenshot placement: the `stats count by src_ip` query correctly aggregating all 5 failed attempts under `192.168.56.102`, proving the field-extraction and aggregation logic identifies the attacking host on its own, without needing to know the IP in advance.*
+*Screenshot: the `stats count by src_ip` query correctly aggregating all 5 failed attempts under `192.168.56.102`, proving the field-extraction and aggregation logic identifies the attacking host on its own, without needing to know the IP in advance.*
 
-**What this proves:** The `rex`/`stats` detection logic correctly and automatically identifies `kali-attacker` as the source generating repeated failed logins, using the exact same query structure introduced in Phase 4 — but now validated against real, externally generated brute-force traffic instead of a single test IP. This confirms the underlying search logic works correctly on its own.
+**What this proves**: The detection rule correctly identifies `kali-attacker` as the source of repeated failed SSH logins, confirming that the Splunk search works with real brute-force attack traffic.
 
-**However — checking the Triggered Alerts page for this activity did not show a new alert instance.** This is investigated in full under Section 7, Problem 1, since it points to a real gap between "the detection query works" and "the saved scheduled alert actually fires for new attackers."
+**But checking the Triggered Alerts page for this activity did not show a new alert instance.** This is investigated in full under Section 7, Problem 1, since it points to a real gap between "the detection query works" and "the saved scheduled alert actually fires for new attackers."
 
-## Section 5 – Nmap Reconnaissance
+## Section 5 - Nmap Reconnaissance
 
-The `nmap -sV` and `nmap -A` scans described in Section 2 were run from `kali-attacker` against `soc-server`'s SSH service as part of the same reconnaissance activity, and in doing so, generated authentication-log entries of their own — even though no login was ever attempted.
+The `nmap -sV` and `nmap -A` scans described in Section 2 were run from `kali-attacker` against `soc-server`'s SSH service as part of the same reconnaissance activity, and in doing so, generated authentication-log entries of their own even though no login was ever attempted.
 
 **Observed log entries in `auth.log` / Splunk, correlating with the scan window:**
 
@@ -125,17 +126,17 @@ diffie-hellman-group16-sha512,diffie-hellman-group-exchange-sha1,diffie-hellman-
 ```
 
 ![SSH pre-authentication negotiation failures from the Nmap scan](09-nmap-preauth-negotiation-events.jpg)
-*Screenshot placement: repeated `Unable to negotiate ... [preauth]` events in Splunk, each tied to a separate `sshd-session` ID, generated during the Nmap service-detection scan against `soc-server`'s SSH port.*
+*Screenshot: repeated `Unable to negotiate ... [preauth]` events in Splunk, each tied to a separate `sshd-session` ID, generated during the Nmap service-detection scan against `soc-server`'s SSH port.*
 
-**Why this happened:** Nmap's service/version detection probe (`-sV`/`-A`) connects to the SSH port and offers a fixed, generic set of key-exchange algorithms as part of fingerprinting the service — including older algorithms like `diffie-hellman-group1-sha1` that this server's OpenSSH version (10.2p1) no longer supports by default for security reasons. The two sides can't agree on a key-exchange method, so the SSH connection is torn down during the negotiation phase itself.
+**Why this happened:** Nmap's service detection attempted to connect to the SSH service using unsupported key-exchange algorithms. Since the server does not allow these older algorithms, the connection was rejected during the SSH negotiation process.
 
-**Why this is not a successful login — or a login attempt at all:** The `[preauth]` tag is the key detail. It means the connection failed *before* the authentication phase of the SSH protocol was ever reached — no username or password was submitted, and no credentials were tested. This is purely a transport-layer/protocol-negotiation failure triggered by how Nmap's probe is built, not any kind of authentication activity.
+**Why this is not a login attempt:** The `[preauth]` tag shows that the connection ended before SSH authentication began. No username or password was submitted, so this was a protocol negotiation failure rather than a login attempt.
 
-**Why this is still useful during an investigation:** Even though no login was attempted, a cluster of `[preauth]` negotiation failures from a single source IP, all within a few seconds of each other, is a recognizable artifact of a port/service scan against SSH. In a real investigation, this pattern — several fast, ephemeral SSH connections that all fail at the negotiation stage from the same host — is a useful supporting data point for identifying that a host was recently scanned, even if the scanning tool itself never authenticated or is no longer active.
+Why this is useful: Multiple [preauth] failures from the same IP within a short time indicate SSH scanning activity. Although Splunk did not automatically detect or alert on these events, the logs were captured and can be manually investigated by an analyst.
 
-> **Important distinction:** This is **not** an IDS detection. Splunk did not flag, score, or alert on these events in this phase — they were manually identified by searching `auth.log` after the fact. The value here is that the *raw log data* is available for an analyst to find during an investigation, not that any automated detection currently exists for this pattern.
+> Note: This is not an automated detection. Splunk did not generate an alert for these events; they were found by manually searching auth.log. The purpose is to show that the raw logs are available for investigation.
 
-## Section 6 – Verification
+## Section 6 - Verification
 
 | What Was Verified | How |
 |---|---|
@@ -145,7 +146,7 @@ diffie-hellman-group16-sha512,diffie-hellman-group-exchange-sha1,diffie-hellman-
 | Authentication events | Confirmed via the baseline (`Accepted password`), brute-force (`Failed password`), and unrelated (`sudo`) searches, each returning the expected event types and fields |
 | Nmap-related SSH events | Confirmed by correlating the `[preauth]` negotiation-failure timestamps in Splunk against the time the Nmap scan was actually run on `kali-attacker` |
 
-## Section 7 – Problems Encountered
+## Section 7 - Problems Encountered
 
 ### Problem 1: Brute-force simulation did not produce a new Triggered Alert
 
@@ -160,16 +161,16 @@ index=main source="/var/log/auth.log" "Failed password"
 This query only ever matches failed attempts from `10.0.2.2` — the IP used during Phase 4 testing. Since `kali-attacker`'s address (`192.168.56.102`) does not match that hardcoded filter, the saved alert has no way to fire for this phase's brute-force activity, regardless of how many failed attempts occurred.
 
 ![Triggered Alerts page still showing only the original instance](15-triggered-alerts-unchanged.jpg)
-*Screenshot placement: the Triggered Alerts page showing only the single `2026-07-27 08:15:01 UTC` entry — no new trigger corresponding to the Aug 5 activity from `kali-attacker`.*
+*Screenshot: the Triggered Alerts page showing only the single `2026-07-27 08:15:01 UTC` entry — no new trigger corresponding to the Aug 5 activity from `kali-attacker`.*
 
 ![The saved alert's underlying query, scoped to the original test IP](16-original-alert-search-hardcoded-ip.jpg)
-*Screenshot placement: the original saved search behind the alert, confirming the hardcoded `search src_ip="10.0.2.2"` filter that explains why it did not fire for the new attacker IP.*
+*Screenshot: the original saved search behind the alert, confirming the hardcoded `search src_ip="10.0.2.2"` filter that explains why it did not fire for the new attacker IP.*
 
-**Solution:** Not yet applied to the saved alert. The manually-run `stats count by src_ip` query (Section 4) already demonstrates the correct, generalized replacement logic — the saved alert itself still needs to be updated to use that version instead of the hardcoded IP filter. This is being tracked as a follow-up rather than resolved in this phase, since applying it live would change previously-documented Phase 4 configuration.
+**Solution:** Not yet applied to the saved alert. The manually-run `stats count by src_ip` query (Section 4) already demonstrates the correct, generalized replacement logic that the saved alert itself still needs to be updated to use that version instead of the hardcoded IP filter. This is being tracked as a follow-up rather than resolved in this phase, since applying it live would change previously-documented Phase 4 configuration.
 
 **Verification:** Confirmed by directly comparing the alert's saved search definition against the source IP actually present in this phase's `Failed password` events.
 
-**Lesson Learned:** A detection query that was correct for its original test scenario can silently stop being useful the moment the actual threat comes from a different source than the one it was validated against. Hardcoding a specific value (like a test IP) during development is reasonable, but a saved, scheduled production alert needs to be revisited and generalized — otherwise "the alert works" and "the alert would catch a real attacker" can quietly become two different claims.
+**Lesson Learned:** A detection query that was correct for its original test scenario can silently stop being useful the moment the actual threat comes from a different source than the one it was validated against. Hardcoding a specific value (like a test IP) during development is reasonable, but a saved, scheduled production alert needs to be revisited and generalized and otherwise "the alert works" and "the alert would catch a real attacker" can quietly become two different claims.
 
 ---
 
@@ -182,7 +183,7 @@ This query only ever matches failed attempts from `10.0.2.2` — the IP used dur
 ![Terminal showing repeated sudo authentication failures](13-sudo-authentication-failure-terminal.jpg)
 *Screenshot placement: terminal on `soc-server` showing `sudo apt update` failing twice with `Authentication failed, try again.`, followed by the `maximum 3 incorrect authentication attempts` lockout message.*
 
-**Solution:** Re-ran the command in a fresh attempt and entered the correct password, which succeeded without further issue.
+**Solution:** Reran the command in a fresh attempt and entered the correct password, which succeeded without further issue.
 
 **Verification:** Confirmed the event was captured correctly in Splunk, which recorded both the failed authentication attempt and the subsequent activity:
 ```
@@ -192,13 +193,13 @@ sudo: samm : TTY=/dev/tty1 ; PWD=/home/samm ; USER=root ; COMMAND=/usr/bin/su - 
 ```
 
 ![Splunk capturing the sudo authentication failure](14-sudo-authentication-failure-splunk.jpg)
-*Screenshot placement: Splunk search `index=main source="/var/log/auth.log" sudo` showing the authentication-failure event alongside subsequent successful `sudo` activity, confirming both the mistake and the recovery were logged accurately.*
+*Screenshot: Splunk search `index=main source="/var/log/auth.log" sudo` showing the authentication-failure event alongside subsequent successful `sudo` activity, confirming both the mistake and the recovery were logged accurately.*
 
-**Lesson Learned:** This wasn't an attack, but it's a useful reminder that the same logging pipeline built to catch malicious activity also faithfully captures ordinary operator mistakes — which is exactly the intended behavior. It's also a small real-world reminder of why account lockout thresholds exist: even a legitimate, authorized user can trip one accidentally.
+**Lesson Learned:** This wasn't an attack, but it's a useful reminder that the same logging pipeline built to catch malicious activity also faithfully captures ordinary operator mistakes and which is exactly the intended behavior. It's also a small real-world reminder of why account lockout thresholds exist: even a legitimate, authorized user can trip one accidentally.
 
 ## Section 8 – Windows Log Collection (Work in Progress)
 
-Universal Forwarder installation on `win-client` has been started, but Windows log integration into Splunk is still under investigation. This section will be fully documented — including configuration steps, verification, and any issues encountered — once that work is complete.
+Universal Forwarder installation on `win-client` has been started, but Windows log integration into Splunk is still under investigation. This section will be fully documented — including configuration steps, verification, and any issues encountered and once that work is complete.
 
 ## References
 
