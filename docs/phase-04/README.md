@@ -104,6 +104,7 @@ index=main source="/var/log/auth.log"
 **Purpose:** Once confirmed the data exists, the search is scoped down to the exact index (`main`, the default index events land in) and exact source file (`/var/log/auth.log`) relevant to SSH authentication. Scoping early avoids wading through irrelevant data from other sources later.
 
 ![Search scoped to auth.log source](02-scoped-search-authlog.png)
+
 *Screenshot: the base query `index=main source="/var/log/auth.log"` used as the foundation for every subsequent, more specific search in this phase.*
 
 ---
