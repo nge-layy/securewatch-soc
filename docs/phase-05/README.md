@@ -218,13 +218,15 @@ sudo: samm : TTY=/dev/tty1 ; PWD=/home/samm ; USER=root ; COMMAND=/usr/bin/su - 
 
 *Screenshot: Splunk search `index=main source="/var/log/auth.log" sudo` showing the authentication-failure event alongside subsequent successful `sudo` activity, confirming both the mistake and the recovery were logged accurately.*
 
-**Lesson Learned:** This wasn't an attack, but it's a useful reminder that the same logging pipeline built to catch malicious activity also faithfully captures ordinary operator mistakes and which is exactly the intended behavior. It's also a small real-world reminder of why account lockout thresholds exist: even a legitimate, authorized user can trip one accidentally.
+**Lesson Learned:** This was not an attack, but it shows that the logging pipeline records both malicious activity and normal user mistakes. It also highlights why account lockout policies are important, as even legitimate users can accidentally enter the wrong password multiple times.
 
 ---
 
 ## Section 8 – Windows Log Collection (Work in Progress)
 
-Universal Forwarder installation on `win-client` has been started, but Windows log integration into Splunk is still under investigation. This section will be fully documented — including configuration steps, verification, and any issues encountered and once that work is complete.
+Universal Forwarder installation on `win-client` has been started, but Windows log integration into Splunk is still under investigation. This section will be fully documented and including configuration steps, verification, and any issues encountered and once that work is complete.
+
+---
 
 ## References
 
