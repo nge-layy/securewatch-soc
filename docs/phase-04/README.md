@@ -90,7 +90,7 @@ index=* "Failed password"
 
 **Purpose:** Before building anything specific, this confirms that across every index Splunk has access to  that failed-password events exist at all. This is a deliberately unscoped, "does the data exist somewhere" query, useful as the very first step whenever building a new detection: prove the raw data is there before narrowing.
 
-![Initial broad search across all indexes](https://github.com/nge-layy/securewatch-soc/blob/1292ae2957d0a748f68c3d40c1ba61567381e087/screenshots/01-initial-broad-search.png)
+![Initial broad search across all indexes](/securewatch-soc/screenshots/01-initial-broad-search.png)
 *Screenshot: initial `index=* "Failed password"` search over a 30-day window, confirming failed-password events are being indexed before scoping the search further.*
 
 ---
