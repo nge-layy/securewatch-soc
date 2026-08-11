@@ -1,4 +1,4 @@
-# Phase 6 – Incident Response
+# Phase 6 - Incident Response
 
 ## Phase 6 Objective
 
