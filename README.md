@@ -109,5 +109,5 @@ SecureWatch-Home-SOC/
 
 ## Author
 
-Built and documented as part of an ongoing home-lab SOC portfolio project.
+Built and documented as a complete home-lab SOC portfolio project for learning and professional development.
 
