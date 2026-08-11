@@ -25,7 +25,7 @@ These logs will later be forwarded to Splunk for monitoring and analysis.
 
 This project is divided into several phases. Each phase builds on the previous one as I gradually create a functional home Security Operations Center (SOC).
 
-### Phase 1 - Infrastructure Foundation (Completed)
+### Phase 1 - Infrastructure Foundation 
 - Created the Ubuntu Server virtual machine.
 - Configured the network.
 - Installed and verified the operating system.
@@ -34,7 +34,7 @@ Documentation: [Phase 1](docs/phase-01/README.md)
 
 ---
 
-### Phase 2 - Remote Administration (Completed)
+### Phase 2 - Remote Administration 
 - Installed and configured SSH.
 - Enabled secure remote access from my Windows computer.
 - Verified remote administration.
@@ -43,7 +43,7 @@ Documentation: [Phase 2](docs/phase-02/README.md)
 
 ---
 
-### Phase 3 - Logging & SIEM Preparation (Completed)
+### Phase 3 - Logging & SIEM Preparation 
 - Explored Linux log files.
 - Configured `auditd`.
 - Prepared the server for future Splunk integration.
@@ -52,7 +52,7 @@ Documentation: [Phase 3](docs/phase-03/README.md)
 
 ---
 
-### Phase 4 - Detection & Alerting (Completed)
+### Phase 4 - Detection & Alerting
 - connected the server to Splunk
 - created detection rules
 - built dashboards
@@ -61,43 +61,47 @@ Documentation: [Phase 4](docs/phase-04/README.md)
 
 ---
 
-### Phase 5 - Attack Simulation (Completed)
+### Phase 5 - Attack Simulation 
 - simulated realistic attacks against the lab to generate security events for analysis.
 
 Documentation: [Phase 5](docs/phase-05/README.md)
 
 ---
 
-### Phase 6 - Incident Response (Planned)
-Finally, I will investigate alerts, document findings, and create incident response reports.
+### Phase 6 - Incident Response
+- investigated alerts, documented findings, and created incident response reports.
+
+Documentation: [Phase 6](docs/phase-06/README.md)
 
 ## Repository Structure
 
 ```
 SecureWatch-Home-SOC/
-├── README.md                      
+├── README.md
 ├── docs/
-│   ├── phase-01/                  
+│   ├── phase-01/
 │   │   ├── README.md
 │   │   ├── architecture.md
 │   │   ├── commands.md
 │   │   └── troubleshooting.md
-│   ├── phase-02/                 
+│   ├── phase-02/
 │   │   ├── README.md
 │   │   ├── architecture.md
 │   │   ├── commands.md
 │   │   └── troubleshooting.md
-│   └── phase-03/                  
-│       ├── README.md
-│       ├── architecture.md
-│       ├── logging.md
-│       ├── commands.md
-│       └── troubleshooting.md                      
+│   ├── phase-03/
+│   │   ├── README.md
+│   │   ├── architecture.md
+│   │   ├── logging.md
+│   │   ├── commands.md
+│   │   └── troubleshooting.md
+│   ├── phase-04/
+│   │   └── detection.md.md
+│   ├── phase-05/
+│   │   └── attack-simulation.md.md
+│   └── phase-06/
+│       └── investigation.md
 ```
-
-## How to Use This Repository
-
-Each phase folder is self-contained and follows the same structure: an overview and objectives, an architecture diagram, annotated commands with expected output, a troubleshooting log, and a "lessons learned" section. Start at Phase 1 and work forward — later phases assume the hardening and logging decisions made earlier.
 
 ## Skills Demonstrated
 
@@ -107,6 +111,3 @@ Each phase folder is self-contained and follows the same structure: an overview 
 
 Built and documented as part of an ongoing home-lab SOC portfolio project.
 
----
-
-*This repository is a living project. Phases 4–6 (SIEM detection, attack simulation, and incident response) are actively in progress.*
