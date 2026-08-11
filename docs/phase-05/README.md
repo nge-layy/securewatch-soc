@@ -187,11 +187,11 @@ This query only ever matches failed attempts from `10.0.2.2` — the IP used dur
 
 *Screenshot: the original saved search behind the alert, confirming the hardcoded `search src_ip="10.0.2.2"` filter that explains why it did not fire for the new attacker IP.*
 
-**Solution:** Not yet applied to the saved alert. The manually-run `stats count by src_ip` query (Section 4) already demonstrates the correct, generalized replacement logic that the saved alert itself still needs to be updated to use that version instead of the hardcoded IP filter. This is being tracked as a follow-up rather than resolved in this phase, since applying it live would change previously-documented Phase 4 configuration.
+**Solution:** No changes were made to the saved alert in this phase. The manual `stats count by src_ip` query (Section 4) already shows the correct solution, but the saved alert still uses a hardcoded IP address. Updating the alert is planned as a future improvement because changing it now would affect the Phase 4 documentation.
 
-**Verification:** Confirmed by directly comparing the alert's saved search definition against the source IP actually present in this phase's `Failed password` events.
+**Verification:** This was confirmed by comparing the saved alert's search query with the source IP found in the `Failed password` events during this phase.
 
-**Lesson Learned:** A detection query that was correct for its original test scenario can silently stop being useful the moment the actual threat comes from a different source than the one it was validated against. Hardcoding a specific value (like a test IP) during development is reasonable, but a saved, scheduled production alert needs to be revisited and generalized and otherwise "the alert works" and "the alert would catch a real attacker" can quietly become two different claims.
+**Lesson Learned:** A detection rule that works during testing may fail to detect real attacks if it contains hardcoded values, such as a specific IP address. Test values should be replaced with more general search logic before using the alert in a real environment.
 
 ---
 
@@ -202,7 +202,8 @@ This query only ever matches failed attempts from `10.0.2.2` — the IP used dur
 **Root Cause:** The password was mistyped twice in a row when prompted by `sudo`, exhausting the default retry limit of three attempts.
 
 ![Terminal showing repeated sudo authentication failures](../../screenshots/13-sudo-authentication-failure-terminal.png)
-*Screenshot placement: terminal on `soc-server` showing `sudo apt update` failing twice with `Authentication failed, try again.`, followed by the `maximum 3 incorrect authentication attempts` lockout message.*
+
+*Screenshot: terminal on `soc-server` showing `sudo apt update` failing twice with `Authentication failed, try again.`, followed by the `maximum 3 incorrect authentication attempts` lockout message.*
 
 **Solution:** Reran the command in a fresh attempt and entered the correct password, which succeeded without further issue.
 
@@ -218,6 +219,8 @@ sudo: samm : TTY=/dev/tty1 ; PWD=/home/samm ; USER=root ; COMMAND=/usr/bin/su - 
 *Screenshot: Splunk search `index=main source="/var/log/auth.log" sudo` showing the authentication-failure event alongside subsequent successful `sudo` activity, confirming both the mistake and the recovery were logged accurately.*
 
 **Lesson Learned:** This wasn't an attack, but it's a useful reminder that the same logging pipeline built to catch malicious activity also faithfully captures ordinary operator mistakes and which is exactly the intended behavior. It's also a small real-world reminder of why account lockout thresholds exist: even a legitimate, authorized user can trip one accidentally.
+
+---
 
 ## Section 8 – Windows Log Collection (Work in Progress)
 
