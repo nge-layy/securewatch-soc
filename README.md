@@ -57,21 +57,21 @@ Documentation: [Phase 3](docs/phase-03/README.md)
 - created detection rules
 - built dashboards
 
-Documentation: [Phase 4](docs/phase-04/README.md)
+Documentation: [Phase 4](docs/phase-04/detection.md)
 
 ---
 
-### Phase 5 - Attack Simulation 
+### Phase 5 - Attack Simulation
 - simulated realistic attacks against the lab to generate security events for analysis.
 
-Documentation: [Phase 5](docs/phase-05/README.md)
+Documentation: [Phase 5](docs/phase-05/attack-simulation.md)
 
 ---
 
 ### Phase 6 - Incident Response
 - investigated alerts, documented findings, and created incident response reports.
 
-Documentation: [Phase 6](docs/phase-06/README.md)
+Documentation: [Phase 6](docs/phase-06/investigation.md)
 
 ## Repository Structure
 
